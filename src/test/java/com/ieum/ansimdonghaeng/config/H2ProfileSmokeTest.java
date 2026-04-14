@@ -2,6 +2,7 @@ package com.ieum.ansimdonghaeng.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
@@ -21,9 +22,13 @@ class H2ProfileSmokeTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private JPAQueryFactory jpaQueryFactory;
+
     @Test
     void usesH2DatasourceWithoutOracleDependency() throws SQLException {
         assertThat(jdbcTemplate.queryForObject("SELECT 1", Integer.class)).isEqualTo(1);
+        assertThat(jpaQueryFactory).isNotNull();
 
         try (Connection connection = dataSource.getConnection()) {
             assertThat(connection.getMetaData().getURL()).contains("jdbc:h2:mem:ansimdonghaeng");

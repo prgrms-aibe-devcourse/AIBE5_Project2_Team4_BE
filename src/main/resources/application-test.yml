@@ -18,3 +18,7 @@ logging:
   level:
     com.ieum.ansimdonghaeng: info
     org.hibernate.SQL: info
+
+app:
+  file-storage:
+    base-dir: ${FILE_STORAGE_BASE_DIR:./target/test-storage}

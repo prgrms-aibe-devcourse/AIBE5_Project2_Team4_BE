@@ -20,3 +20,7 @@ logging:
     com.ieum.ansimdonghaeng: debug
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
+
+app:
+  file-storage:
+    base-dir: ${FILE_STORAGE_BASE_DIR:./storage/local}

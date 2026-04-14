@@ -1,7 +1,7 @@
 package com.ieum.ansimdonghaeng.common.websocket;
 
-import java.util.Arrays;
-import org.springframework.beans.factory.annotation.Value;
+import com.ieum.ansimdonghaeng.common.security.CorsProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -10,29 +10,23 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final String endpoint;
-    private final String allowedOrigins;
-
-    public WebSocketConfig(@Value("${app.websocket.endpoint:/ws}") String endpoint,
-                           @Value("${app.cors.allowed-origins:http://localhost:3000}") String allowedOrigins) {
-        this.endpoint = endpoint;
-        this.allowedOrigins = allowedOrigins;
-    }
+    private final WebSocketProperties webSocketProperties;
+    private final CorsProperties corsProperties;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint(endpoint)
-                .setAllowedOriginPatterns(Arrays.stream(allowedOrigins.split(","))
-                        .map(String::trim)
-                        .filter(origin -> !origin.isBlank())
-                        .toArray(String[]::new));
+        registry.addEndpoint(webSocketProperties.getEndpoint())
+                .setAllowedOriginPatterns(corsProperties.getAllowedOrigins().toArray(String[]::new));
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.setApplicationDestinationPrefixes("/app");
-        registry.enableSimpleBroker("/topic", "/queue");
+        registry.setApplicationDestinationPrefixes(
+                webSocketProperties.getApplicationDestinationPrefixes().toArray(String[]::new)
+        );
+        registry.enableSimpleBroker(webSocketProperties.getSimpleBrokerDestinations().toArray(String[]::new));
     }
 }
