@@ -11,6 +11,9 @@ import com.ieum.ansimdonghaeng.domain.auth.dto.response.AuthTokenResponse;
 import com.ieum.ansimdonghaeng.domain.auth.dto.response.KakaoUserInfo;
 import com.ieum.ansimdonghaeng.domain.auth.oauth.KakaoOAuthClient;
 import com.ieum.ansimdonghaeng.domain.auth.repository.RefreshTokenRepository;
+import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
+import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
+import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalRepository;
 import com.ieum.ansimdonghaeng.domain.user.entity.AuthProvider;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
@@ -38,6 +41,15 @@ class KakaoOAuthServiceTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
+    private ProposalRepository proposalRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private FreelancerProfileRepository freelancerProfileRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @MockBean
@@ -45,6 +57,9 @@ class KakaoOAuthServiceTest {
 
     @BeforeEach
     void setUp() {
+        proposalRepository.deleteAll();
+        projectRepository.deleteAll();
+        freelancerProfileRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }

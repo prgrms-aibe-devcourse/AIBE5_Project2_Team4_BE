@@ -6,6 +6,9 @@ import com.ieum.ansimdonghaeng.domain.auth.dto.request.AuthLoginRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.AuthRefreshRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.AuthSignupRequest;
 import com.ieum.ansimdonghaeng.domain.auth.repository.RefreshTokenRepository;
+import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
+import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
+import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalRepository;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
 import java.util.List;
@@ -45,6 +48,15 @@ class AuthControllerIntegrationTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
+    private ProposalRepository proposalRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private FreelancerProfileRepository freelancerProfileRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -52,6 +64,9 @@ class AuthControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        proposalRepository.deleteAll();
+        projectRepository.deleteAll();
+        freelancerProfileRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }

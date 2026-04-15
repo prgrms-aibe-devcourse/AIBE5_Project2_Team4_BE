@@ -10,6 +10,9 @@ import com.ieum.ansimdonghaeng.domain.auth.dto.request.KakaoOAuthLoginRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.response.KakaoUserInfo;
 import com.ieum.ansimdonghaeng.domain.auth.oauth.KakaoOAuthClient;
 import com.ieum.ansimdonghaeng.domain.auth.repository.RefreshTokenRepository;
+import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
+import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
+import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalRepository;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,11 +42,23 @@ class KakaoOAuthControllerIntegrationTest {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 
+    @Autowired
+    private ProposalRepository proposalRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private FreelancerProfileRepository freelancerProfileRepository;
+
     @MockBean
     private KakaoOAuthClient kakaoOAuthClient;
 
     @BeforeEach
     void setUp() {
+        proposalRepository.deleteAll();
+        projectRepository.deleteAll();
+        freelancerProfileRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }

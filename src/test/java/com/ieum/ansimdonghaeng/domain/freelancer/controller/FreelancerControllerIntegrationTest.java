@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.ieum.ansimdonghaeng.domain.auth.repository.RefreshTokenRepository;
 import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerProfile;
 import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
+import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
+import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalRepository;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
 import java.math.BigDecimal;
@@ -36,6 +38,12 @@ class FreelancerControllerIntegrationTest {
     private FreelancerProfileRepository freelancerProfileRepository;
 
     @Autowired
+    private ProposalRepository proposalRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
@@ -43,6 +51,8 @@ class FreelancerControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        proposalRepository.deleteAll();
+        projectRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         freelancerProfileRepository.deleteAll();
         userRepository.deleteAll();
