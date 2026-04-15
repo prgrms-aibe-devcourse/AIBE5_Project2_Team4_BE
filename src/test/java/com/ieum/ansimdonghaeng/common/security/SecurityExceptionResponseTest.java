@@ -31,13 +31,13 @@ class SecurityExceptionResponseTest {
 
     @Test
     void unauthorizedRequestReturnsJsonBody() throws Exception {
-        mockMvc.perform(get("/api/v1/projects/bootstrap"))
+        mockMvc.perform(get("/api/v1/projects/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("COMMON_401"))
                 .andExpect(jsonPath("$.error.status").value(401))
-                .andExpect(jsonPath("$.error.path").value("/api/v1/projects/bootstrap"));
+                .andExpect(jsonPath("$.error.path").value("/api/v1/projects/me"));
     }
 
     @Test
