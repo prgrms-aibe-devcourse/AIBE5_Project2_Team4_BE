@@ -1,8 +1,8 @@
 package com.ieum.ansimdonghaeng.domain.freelancer.controller;
 
 import com.ieum.ansimdonghaeng.common.response.ApiResponse;
-import com.ieum.ansimdonghaeng.domain.freelancer.dto.response.FreelancerDetailResponse;
 import com.ieum.ansimdonghaeng.domain.freelancer.dto.response.FreelancerListResponse;
+import com.ieum.ansimdonghaeng.domain.freelancer.dto.response.PublicFreelancerDetailResponse;
 import com.ieum.ansimdonghaeng.domain.freelancer.service.FreelancerService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.constraints.Positive;
@@ -37,7 +37,7 @@ public class FreelancerController {
     // 공개 가능한 프리랜서 상세 정보만 조회할 수 있다.
     @Operation(summary = "프리랜서 상세 조회")
     @GetMapping("/{freelancerProfileId}")
-    public ResponseEntity<ApiResponse<FreelancerDetailResponse>> getFreelancer(
+    public ResponseEntity<ApiResponse<PublicFreelancerDetailResponse>> getFreelancer(
             @PathVariable Long freelancerProfileId
     ) {
         return ResponseEntity.ok(ApiResponse.success(freelancerService.getFreelancer(freelancerProfileId)));

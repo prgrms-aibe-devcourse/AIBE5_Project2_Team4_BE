@@ -137,4 +137,25 @@ public class FreelancerProfile extends BaseAuditEntity {
     public boolean isPublicProfile() {
         return Boolean.TRUE.equals(publicYn);
     }
+
+    public void update(String careerDescription,
+                       Boolean caregiverYn,
+                       Boolean publicYn,
+                       Set<String> activityRegionCodes,
+                       Set<String> availableTimeSlotCodes,
+                       Set<String> projectTypeCodes) {
+        this.careerDescription = careerDescription;
+        this.caregiverYn = Boolean.TRUE.equals(caregiverYn);
+        this.publicYn = Boolean.TRUE.equals(publicYn);
+        this.activityRegionCodes.clear();
+        this.activityRegionCodes.addAll(activityRegionCodes == null ? Set.of() : activityRegionCodes);
+        this.availableTimeSlotCodes.clear();
+        this.availableTimeSlotCodes.addAll(availableTimeSlotCodes == null ? Set.of() : availableTimeSlotCodes);
+        this.projectTypeCodes.clear();
+        this.projectTypeCodes.addAll(projectTypeCodes == null ? Set.of() : projectTypeCodes);
+    }
+
+    public void markVerified() {
+        this.verifiedYn = true;
+    }
 }

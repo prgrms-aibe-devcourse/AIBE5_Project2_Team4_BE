@@ -1,6 +1,7 @@
 package com.ieum.ansimdonghaeng.domain.user.controller;
 
 import com.ieum.ansimdonghaeng.common.response.ApiResponse;
+import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
 import com.ieum.ansimdonghaeng.domain.user.dto.request.UserProfileUpdateRequest;
 import com.ieum.ansimdonghaeng.domain.user.dto.response.PublicUserProfileResponse;
 import com.ieum.ansimdonghaeng.domain.user.dto.response.UserProfileResponse;
@@ -8,7 +9,7 @@ import com.ieum.ansimdonghaeng.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,14 +25,17 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserProfileResponse>> getMyProfile(Authentication authentication) {
-        return ResponseEntity.ok(ApiResponse.success(userService.getMyProfile(authentication.getName())));
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getMyProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(userService.getMyProfile(userDetails.getUserId())));
     }
 
     @PatchMapping("/me")
-    public ResponseEntity<ApiResponse<UserProfileResponse>> updateMyProfile(Authentication authentication,
+    public ResponseEntity<ApiResponse<UserProfileResponse>> updateMyProfile(
+                                                                            @AuthenticationPrincipal CustomUserDetails userDetails,
                                                                             @Valid @RequestBody UserProfileUpdateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(userService.updateMyProfile(authentication.getName(), request)));
+        return ResponseEntity.ok(ApiResponse.success(userService.updateMyProfile(userDetails.getUserId(), request)));
     }
 
     @GetMapping("/{userId}/public-profile")
