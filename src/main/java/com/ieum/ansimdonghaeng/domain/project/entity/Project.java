@@ -1,6 +1,7 @@
 package com.ieum.ansimdonghaeng.domain.project.entity;
 
 import com.ieum.ansimdonghaeng.common.audit.BaseAuditEntity;
+import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,7 +11,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -34,6 +38,10 @@ public class Project extends BaseAuditEntity {
 
     @Column(name = "OWNER_USER_ID", nullable = false)
     private Long ownerUserId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "OWNER_USER_ID", insertable = false, updatable = false, foreignKey = @ForeignKey(value = jakarta.persistence.ConstraintMode.NO_CONSTRAINT))
+    private User ownerUser;
 
     @Column(name = "TITLE", nullable = false, length = 200)
     private String title;
@@ -158,6 +166,10 @@ public class Project extends BaseAuditEntity {
 
     public boolean isInProgressStatus() {
         return status == ProjectStatus.IN_PROGRESS;
+    }
+
+    public boolean canAdminCancel() {
+        return status != ProjectStatus.COMPLETED && status != ProjectStatus.CANCELLED;
     }
 
     // 수정은 서비스에서 검증을 끝낸 뒤 최종 반영값만 엔티티에 반영한다.

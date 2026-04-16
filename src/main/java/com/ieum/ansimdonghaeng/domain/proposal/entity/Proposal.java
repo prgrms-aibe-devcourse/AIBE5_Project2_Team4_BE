@@ -82,6 +82,10 @@ public class Proposal extends BaseAuditEntity {
         return freelancerProfile.getId().equals(freelancerProfileId);
     }
 
+    public boolean isAcceptedStatus() {
+        return status == ProposalStatus.ACCEPTED;
+    }
+
     // 프리랜서가 제안을 수락하면 상태와 응답 시각을 함께 저장한다.
     public void accept(LocalDateTime respondedAt) {
         this.status = ProposalStatus.ACCEPTED;

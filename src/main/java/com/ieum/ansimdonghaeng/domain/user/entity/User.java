@@ -61,6 +61,10 @@ public class User extends BaseAuditEntity {
         this.activeYn = false;
     }
 
+    public void updateActive(boolean active) {
+        this.activeYn = active;
+    }
+
     public UserRole getRole() {
         return UserRole.fromCode(roleCode);
     }

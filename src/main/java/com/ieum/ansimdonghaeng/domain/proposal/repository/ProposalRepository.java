@@ -16,6 +16,28 @@ public interface ProposalRepository extends JpaRepository<Proposal, Long>, Propo
 
     List<Proposal> findAllByProject_IdAndStatusAndIdNot(Long projectId, ProposalStatus status, Long proposalId);
 
+    @Query("""
+            select proposal
+            from Proposal proposal
+            join fetch proposal.project project
+            join fetch proposal.freelancerProfile freelancerProfile
+            join fetch freelancerProfile.user user
+            where proposal.project.id = :projectId
+              and proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
+            """)
+    Optional<Proposal> findAcceptedProposalByProjectId(@Param("projectId") Long projectId);
+
+    @Query("""
+            select proposal
+            from Proposal proposal
+            join fetch proposal.project project
+            join fetch proposal.freelancerProfile freelancerProfile
+            join fetch freelancerProfile.user user
+            where proposal.project.id in :projectIds
+              and proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
+            """)
+    List<Proposal> findAcceptedProposalsByProjectIds(@Param("projectIds") List<Long> projectIds);
+
     // 상세 응답에서 프로젝트와 프리랜서 정보를 같이 써야 하므로 fetch join으로 조회한다.
     @Query("""
             select proposal

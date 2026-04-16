@@ -75,6 +75,14 @@ public class Review extends BaseAuditEntity {
         this.blindedYn = "Y";
     }
 
+    public void unblind() {
+        this.blindedYn = "N";
+    }
+
+    public boolean isBlinded() {
+        return "Y".equalsIgnoreCase(blindedYn);
+    }
+
     public void update(Integer rating, String content) {
         this.rating = rating;
         this.content = content;
