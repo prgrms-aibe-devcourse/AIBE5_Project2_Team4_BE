@@ -11,12 +11,16 @@ import com.ieum.ansimdonghaeng.domain.auth.dto.response.AuthSignupResponse;
 import com.ieum.ansimdonghaeng.domain.auth.dto.response.AuthTokenResponse;
 import com.ieum.ansimdonghaeng.domain.auth.dto.response.AuthUserResponse;
 import com.ieum.ansimdonghaeng.domain.auth.dto.response.KakaoUserInfo;
+import com.ieum.ansimdonghaeng.domain.auth.entity.RefreshToken;
 import com.ieum.ansimdonghaeng.domain.auth.oauth.KakaoOAuthClient;
+import com.ieum.ansimdonghaeng.domain.auth.repository.RefreshTokenRepository;
 import com.ieum.ansimdonghaeng.domain.user.entity.AuthProvider;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.entity.UserRole;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,7 @@ public class AuthService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final KakaoOAuthClient kakaoOAuthClient;
 
@@ -58,11 +63,18 @@ public class AuthService {
             throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
+        RefreshToken savedRefreshToken = refreshTokenRepository.findByTokenValue(refreshTokenValue)
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN));
+        if (!savedRefreshToken.isUsable(LocalDateTime.now())) {
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
         String email = jwtTokenProvider.getUsername(refreshTokenValue);
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN));
 
         validateActiveUser(user);
+        savedRefreshToken.revoke(LocalDateTime.now());
         return issueTokensForUser(user);
     }
 
@@ -101,8 +113,9 @@ public class AuthService {
 
     @Transactional
     public void logout(String email) {
-        userRepository.findByEmailIgnoreCase(email)
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "User was not found."));
+        revokeActiveRefreshTokens(user, LocalDateTime.now());
     }
 
     private AuthTokenResponse issueTokensForUser(User user) {
@@ -110,6 +123,11 @@ public class AuthService {
 
         String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail(), authorities);
         String refreshTokenValue = jwtTokenProvider.generateRefreshToken(user.getEmail(), authorities);
+        LocalDateTime refreshTokenExpiresAt = LocalDateTime.ofInstant(
+                Instant.now().plusSeconds(jwtTokenProvider.getRefreshTokenExpirationSeconds()),
+                ZoneId.systemDefault()
+        );
+        refreshTokenRepository.save(RefreshToken.issue(user, refreshTokenValue, refreshTokenExpiresAt));
 
         return new AuthTokenResponse(
                 "Bearer",
@@ -119,6 +137,11 @@ public class AuthService {
                 jwtTokenProvider.getRefreshTokenExpirationSeconds(),
                 new AuthUserResponse(user.getId(), user.getEmail(), user.getName(), user.getRole().getCode())
         );
+    }
+
+    private void revokeActiveRefreshTokens(User user, LocalDateTime revokedAt) {
+        refreshTokenRepository.findAllByUser_IdAndActiveYnTrue(user.getId())
+                .forEach(refreshToken -> refreshToken.revoke(revokedAt));
     }
 
     private User createKakaoUser(KakaoUserInfo kakaoUserInfo) {

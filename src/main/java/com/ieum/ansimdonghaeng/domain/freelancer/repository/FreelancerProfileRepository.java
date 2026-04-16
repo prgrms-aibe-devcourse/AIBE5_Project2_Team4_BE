@@ -12,6 +12,8 @@ public interface FreelancerProfileRepository extends JpaRepository<FreelancerPro
     @Query("select profile from FreelancerProfile profile join fetch profile.user where profile.user.id = :userId")
     Optional<FreelancerProfile> findByUserId(@Param("userId") Long userId);
 
+    boolean existsByUser_Id(Long userId);
+
     // 상세 응답에서 사용자 정보까지 함께 쓰기 위해 프로필과 사용자 정보를 같이 조회한다.
     @Query("select profile from FreelancerProfile profile join fetch profile.user where profile.id = :freelancerProfileId")
     Optional<FreelancerProfile> findDetailById(@Param("freelancerProfileId") Long freelancerProfileId);

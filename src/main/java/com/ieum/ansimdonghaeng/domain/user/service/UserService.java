@@ -18,13 +18,13 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public UserProfileResponse getMyProfile(String email) {
-        return toProfileResponse(getActiveUserByEmail(email));
+    public UserProfileResponse getMyProfile(Long userId) {
+        return toProfileResponse(getActiveUserById(userId));
     }
 
     @Transactional
-    public UserProfileResponse updateMyProfile(String email, UserProfileUpdateRequest request) {
-        User user = getActiveUserByEmail(email);
+    public UserProfileResponse updateMyProfile(Long userId, UserProfileUpdateRequest request) {
+        User user = getActiveUserById(userId);
         user.updateProfile(request.name(), request.phone(), request.intro());
         return toProfileResponse(user);
     }
@@ -42,8 +42,8 @@ public class UserService {
         );
     }
 
-    private User getActiveUserByEmail(String email) {
-        User user = userRepository.findByEmailIgnoreCase(email)
+    private User getActiveUserById(Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "User was not found."));
 
         if (Boolean.FALSE.equals(user.getActiveYn())) {

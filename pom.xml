@@ -27,6 +27,7 @@
         <springdoc.version>2.6.0</springdoc.version>
         <jjwt.version>0.12.6</jjwt.version>
         <oracle.jdbc.version>23.4.0.24.05</oracle.jdbc.version>
+        <lombok.version>1.18.44</lombok.version>
     </properties>
 
     <dependencies>

@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 
 public record FreelancerListResponse(
-        List<FreelancerSummaryResponse> content,
+        List<PublicFreelancerSummaryResponse> content,
         int page,
         int size,
         long totalElements,
@@ -17,7 +17,7 @@ public record FreelancerListResponse(
     public static FreelancerListResponse from(Page<FreelancerProfile> freelancerPage) {
         return new FreelancerListResponse(
                 freelancerPage.getContent().stream()
-                        .map(FreelancerSummaryResponse::from)
+                        .map(PublicFreelancerSummaryResponse::from)
                         .toList(),
                 freelancerPage.getNumber(),
                 freelancerPage.getSize(),

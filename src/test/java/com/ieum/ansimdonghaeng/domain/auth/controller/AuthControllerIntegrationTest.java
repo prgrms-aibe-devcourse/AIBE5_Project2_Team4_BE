@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.AuthLoginRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.AuthRefreshRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.AuthSignupRequest;
+import com.ieum.ansimdonghaeng.domain.auth.repository.RefreshTokenRepository;
 import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
 import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
 import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalRepository;
@@ -41,6 +42,9 @@ class AuthControllerIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
     private ProposalRepository proposalRepository;
 
     @Autowired
@@ -54,6 +58,7 @@ class AuthControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        refreshTokenRepository.deleteAll();
         proposalRepository.deleteAll();
         projectRepository.deleteAll();
         freelancerProfileRepository.deleteAll();
@@ -154,6 +159,41 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("refresh token rotation revokes the previous refresh token")
+    void refreshRevokesPreviousRefreshToken() throws Exception {
+        userRepository.save(User.builder()
+                .email("rotation@test.com")
+                .passwordHash(passwordEncoder.encode("1234"))
+                .name("rotation-user")
+                .roleCode("ROLE_USER")
+                .activeYn(true)
+                .build());
+
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AuthLoginRequest("rotation@test.com", "1234"))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String refreshToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
+                .path("data")
+                .path("refreshToken")
+                .asText();
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AuthRefreshRequest(refreshToken))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AuthRefreshRequest(refreshToken))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_401_REFRESH"));
+    }
+
+    @Test
     @DisplayName("reissue alias returns a new token pair")
     void reissueAliasReturnsNewTokenPair() throws Exception {
         userRepository.save(User.builder()
@@ -210,5 +250,43 @@ class AuthControllerIntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @DisplayName("logout revokes active refresh tokens")
+    void logoutRevokesRefreshToken() throws Exception {
+        userRepository.save(User.builder()
+                .email("logout-refresh@test.com")
+                .passwordHash(passwordEncoder.encode("1234"))
+                .name("logout-refresh-user")
+                .roleCode("ROLE_USER")
+                .activeYn(true)
+                .build());
+
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AuthLoginRequest("logout-refresh@test.com", "1234"))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String accessToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
+                .path("data")
+                .path("accessToken")
+                .asText();
+        String refreshToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
+                .path("data")
+                .path("refreshToken")
+                .asText();
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AuthRefreshRequest(refreshToken))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_401_REFRESH"));
     }
 }

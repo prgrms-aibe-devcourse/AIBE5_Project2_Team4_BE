@@ -57,6 +57,10 @@ public class User extends BaseAuditEntity {
         this.intro = intro;
     }
 
+    public void changeRole(UserRole role) {
+        this.roleCode = role.getCode();
+    }
+
     public void deactivate() {
         this.activeYn = false;
     }

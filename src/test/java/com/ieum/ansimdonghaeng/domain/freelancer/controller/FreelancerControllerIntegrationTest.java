@@ -54,10 +54,10 @@ class FreelancerControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("공개 프리랜서 목록은 인증 없이 조회할 수 있다")
+    @DisplayName("public freelancer list is available without authentication")
     void getFreelancersWithoutAuthentication() throws Exception {
-        User publicFreelancer = userRepository.save(createUser("freelancer1@test.com", "공개 프리랜서", "ROLE_FREELANCER"));
-        User privateFreelancer = userRepository.save(createUser("freelancer2@test.com", "비공개 프리랜서", "ROLE_FREELANCER"));
+        User publicFreelancer = userRepository.save(createUser("freelancer1@test.com", "Public Freelancer", "ROLE_FREELANCER"));
+        User privateFreelancer = userRepository.save(createUser("freelancer2@test.com", "Private Freelancer", "ROLE_FREELANCER"));
 
         FreelancerProfile publicProfile = freelancerProfileRepository.save(createProfile(publicFreelancer, true));
         freelancerProfileRepository.save(createProfile(privateFreelancer, false));
@@ -67,28 +67,32 @@ class FreelancerControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.totalElements").value(1))
                 .andExpect(jsonPath("$.data.content[0].freelancerProfileId").value(publicProfile.getId()))
-                .andExpect(jsonPath("$.data.content[0].name").value("공개 프리랜서"));
+                .andExpect(jsonPath("$.data.content[0].name").value("Public Freelancer"))
+                .andExpect(jsonPath("$.data.content[0].userId").doesNotExist());
     }
 
     @Test
-    @DisplayName("공개 프리랜서 상세는 인증 없이 조회할 수 있다")
+    @DisplayName("public freelancer detail is available without authentication")
     void getFreelancerDetailWithoutAuthentication() throws Exception {
-        User freelancer = userRepository.save(createUser("detail@test.com", "상세 프리랜서", "ROLE_FREELANCER"));
+        User freelancer = userRepository.save(createUser("detail@test.com", "Detail Freelancer", "ROLE_FREELANCER"));
         FreelancerProfile profile = freelancerProfileRepository.save(createProfile(freelancer, true));
 
         mockMvc.perform(get("/api/v1/freelancers/{freelancerProfileId}", profile.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.freelancerProfileId").value(profile.getId()))
-                .andExpect(jsonPath("$.data.userId").value(freelancer.getId()))
-                .andExpect(jsonPath("$.data.name").value("상세 프리랜서"))
-                .andExpect(jsonPath("$.data.publicYn").value(true));
+                .andExpect(jsonPath("$.data.name").value("Detail Freelancer"))
+                .andExpect(jsonPath("$.data.userId").doesNotExist())
+                .andExpect(jsonPath("$.data.publicYn").doesNotExist())
+                .andExpect(jsonPath("$.data.roleCode").doesNotExist())
+                .andExpect(jsonPath("$.data.createdAt").doesNotExist())
+                .andExpect(jsonPath("$.data.updatedAt").doesNotExist());
     }
 
     @Test
-    @DisplayName("비공개 프리랜서 상세는 조회할 수 없다")
+    @DisplayName("private freelancer detail is not available publicly")
     void getFreelancerDetailFailsForPrivateProfile() throws Exception {
-        User freelancer = userRepository.save(createUser("private@test.com", "비공개 프리랜서", "ROLE_FREELANCER"));
+        User freelancer = userRepository.save(createUser("private@test.com", "Private Freelancer", "ROLE_FREELANCER"));
         FreelancerProfile profile = freelancerProfileRepository.save(createProfile(freelancer, false));
 
         mockMvc.perform(get("/api/v1/freelancers/{freelancerProfileId}", profile.getId()))
@@ -103,7 +107,7 @@ class FreelancerControllerIntegrationTest {
                 .passwordHash(passwordEncoder.encode("1234"))
                 .name(name)
                 .phone("010-0000-0000")
-                .intro("소개")
+                .intro("intro")
                 .roleCode(roleCode)
                 .activeYn(true)
                 .build();
@@ -112,7 +116,7 @@ class FreelancerControllerIntegrationTest {
     private FreelancerProfile createProfile(User user, boolean publicYn) {
         return FreelancerProfile.create(
                 user,
-                "경력 설명",
+                "career description",
                 true,
                 true,
                 new BigDecimal("4.50"),
