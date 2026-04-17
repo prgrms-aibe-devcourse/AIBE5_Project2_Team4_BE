@@ -36,16 +36,16 @@ public class FreelancerFile {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private FreelancerProfile freelancerProfile;
 
-    @Column(name = "ORIGINAL_NAME", nullable = false, length = 255)
+    @Column(name = "ORIGINAL_NAME", nullable = false, length = 510)
     private String originalFilename;
 
-    @Column(name = "STORED_NAME", nullable = false, length = 255)
+    @Column(name = "STORED_NAME", nullable = false, length = 510)
     private String storedFilename;
 
-    @Column(name = "FILE_URL", nullable = false, length = 500)
+    @Column(name = "FILE_URL", nullable = false, length = 2000)
     private String fileUrl;
 
-    @Column(name = "CONTENT_TYPE", length = 100)
+    @Column(name = "CONTENT_TYPE", length = 200)
     private String contentType;
 
     @Column(name = "FILE_SIZE", nullable = false)

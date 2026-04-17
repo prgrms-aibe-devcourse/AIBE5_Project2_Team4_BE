@@ -95,6 +95,26 @@ class ProjectControllerIntegrationTest {
     }
 
     @Test
+    void createProjectRejectsUnsupportedProjectTypeCode() throws Exception {
+        mockMvc.perform(post("/api/v1/projects")
+                        .with(authenticatedUser(1L))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "title", "invalid project type",
+                                "projectTypeCode", "UNKNOWN_TYPE",
+                                "serviceRegionCode", "SEOUL_GANGNAM",
+                                "requestedStartAt", "2026-04-10T14:00:00",
+                                "requestedEndAt", "2026-04-10T17:00:00",
+                                "serviceAddress", "Seoul Gangnam 123",
+                                "requestDetail", "invalid code"
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("COMMON_400"))
+                .andExpect(jsonPath("$.error.message").value("projectTypeCode: unsupported code(s) [UNKNOWN_TYPE]"));
+    }
+
+    @Test
     void listMyProjectsSuccess() throws Exception {
         Project first = persistProject(1L, "첫 번째 프로젝트", ProjectStatus.REQUESTED);
         Project second = persistProject(1L, "두 번째 프로젝트", ProjectStatus.CANCELLED);

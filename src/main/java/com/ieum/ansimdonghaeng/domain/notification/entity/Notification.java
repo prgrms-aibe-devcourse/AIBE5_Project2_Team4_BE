@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -109,5 +110,17 @@ public class Notification {
                 .readYn(false)
                 .relatedNoticeId(notice.getId())
                 .build();
+    }
+
+    public boolean isOwnedBy(Long userId) {
+        return Objects.equals(user.getId(), userId);
+    }
+
+    public void markRead(LocalDateTime readAt) {
+        if (Boolean.TRUE.equals(readYn)) {
+            return;
+        }
+        this.readYn = true;
+        this.readAt = readAt;
     }
 }

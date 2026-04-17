@@ -1,8 +1,7 @@
 package com.ieum.ansimdonghaeng.domain.project.controller;
 
-import com.ieum.ansimdonghaeng.common.exception.CustomException;
-import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.common.response.ApiResponse;
+import com.ieum.ansimdonghaeng.common.security.AuthenticatedUserSupport;
 import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
 import com.ieum.ansimdonghaeng.domain.project.dto.request.ProjectCancelRequest;
 import com.ieum.ansimdonghaeng.domain.project.dto.request.ProjectCreateRequest;
@@ -40,7 +39,6 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
-    // 현재 로그인한 일반 사용자의 프로젝트 요청을 생성한다.
     @Operation(summary = "프로젝트 생성")
     @PostMapping
     @PreAuthorize("hasRole('USER')")
@@ -48,11 +46,13 @@ public class ProjectController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ProjectCreateRequest request
     ) {
-        ProjectCreateResponse response = projectService.createProject(currentUserId(userDetails), request);
+        ProjectCreateResponse response = projectService.createProject(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                request
+        );
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
-    // 현재 로그인한 사용자가 소유한 프로젝트만 페이지 단위로 조회한다.
     @Operation(summary = "내 프로젝트 목록 조회")
     @GetMapping("/me")
     @PreAuthorize("hasRole('USER')")
@@ -62,11 +62,15 @@ public class ProjectController {
             @PositiveOrZero @RequestParam(defaultValue = "0") int page,
             @Positive @RequestParam(defaultValue = "10") int size
     ) {
-        ProjectListResponse response = projectService.getMyProjects(currentUserId(userDetails), status, page, size);
+        ProjectListResponse response = projectService.getMyProjects(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                status,
+                page,
+                size
+        );
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // 프로젝트 작성자 본인만 상세 정보를 조회할 수 있다.
     @Operation(summary = "프로젝트 상세 조회")
     @GetMapping("/{projectId}")
     @PreAuthorize("hasRole('USER')")
@@ -74,11 +78,13 @@ public class ProjectController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long projectId
     ) {
-        ProjectDetailResponse response = projectService.getProject(currentUserId(userDetails), projectId);
+        ProjectDetailResponse response = projectService.getProject(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                projectId
+        );
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // REQUESTED 상태의 프로젝트만 부분 수정할 수 있다.
     @Operation(summary = "프로젝트 수정")
     @PatchMapping("/{projectId}")
     @PreAuthorize("hasRole('USER')")
@@ -87,11 +93,14 @@ public class ProjectController {
             @PathVariable Long projectId,
             @Valid @RequestBody ProjectUpdateRequest request
     ) {
-        ProjectDetailResponse response = projectService.updateProject(currentUserId(userDetails), projectId, request);
+        ProjectDetailResponse response = projectService.updateProject(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                projectId,
+                request
+        );
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // REQUESTED 상태의 프로젝트만 취소할 수 있다.
     @Operation(summary = "프로젝트 취소")
     @PatchMapping("/{projectId}/cancel")
     @PreAuthorize("hasRole('USER')")
@@ -100,15 +109,11 @@ public class ProjectController {
             @PathVariable Long projectId,
             @Valid @RequestBody ProjectCancelRequest request
     ) {
-        ProjectCancelResponse response = projectService.cancelProject(currentUserId(userDetails), projectId, request);
+        ProjectCancelResponse response = projectService.cancelProject(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                projectId,
+                request
+        );
         return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    // 현재 스켈레톤 보안 구조에서는 principal에 userId가 반드시 있어야 owner 검증이 가능하다.
-    private Long currentUserId(CustomUserDetails userDetails) {
-        if (userDetails == null || userDetails.getUserId() == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED, "Authenticated user id is required.");
-        }
-        return userDetails.getUserId();
     }
 }

@@ -8,7 +8,7 @@ public record VerificationCreateRequest(
         @NotNull(message = "type is required")
         VerificationType type,
 
-        @Size(max = 1000, message = "requestMessage must be 1000 characters or fewer")
+        @Size(max = 4000, message = "requestMessage must be 4000 characters or fewer")
         String requestMessage
 ) {
 }

@@ -75,10 +75,27 @@ class AdminVerificationControllerIntegrationTest extends AdminIntegrationTestSup
         mockMvc.perform(patch("/api/v1/admin/verifications/{verificationId}/reject", verification.getId())
                         .with(adminPrincipal(admin))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(java.util.Map.of("reason", "missing file"))))
+                        .content(objectMapper.writeValueAsString(java.util.Map.of("reviewComment", "missing file"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("REJECTED"))
                 .andExpect(jsonPath("$.data.rejectReason").value("missing file"));
+    }
+
+    @Test
+    void rejectVerificationFailsWhenReviewCommentMissing() throws Exception {
+        User admin = saveUser("admin-missing@test.com", "admin", UserRole.ADMIN);
+        User freelancerUser = saveUser("freelancer-missing@test.com", "freelancer", UserRole.FREELANCER);
+        var profile = saveFreelancerProfile(freelancerUser, false, true);
+        Verification verification = saveVerification(profile, VerificationType.CAREGIVER, VerificationStatus.PENDING, null, null);
+
+        mockMvc.perform(patch("/api/v1/admin/verifications/{verificationId}/reject", verification.getId())
+                        .with(adminPrincipal(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(java.util.Map.of())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("COMMON_400"))
+                .andExpect(jsonPath("$.error.message").value("reviewComment: reviewComment is required."));
     }
 
     @Test

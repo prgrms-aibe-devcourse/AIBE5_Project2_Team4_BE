@@ -1,8 +1,7 @@
 package com.ieum.ansimdonghaeng.domain.verification.controller;
 
-import com.ieum.ansimdonghaeng.common.exception.CustomException;
-import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.common.response.ApiResponse;
+import com.ieum.ansimdonghaeng.common.security.AuthenticatedUserSupport;
 import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
 import com.ieum.ansimdonghaeng.domain.verification.dto.request.VerificationCreateRequest;
 import com.ieum.ansimdonghaeng.domain.verification.dto.response.VerificationFileResponse;
@@ -36,7 +35,10 @@ public class VerificationController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody VerificationCreateRequest request
     ) {
-        VerificationResponse response = verificationService.createMyVerification(currentUserId(userDetails), request);
+        VerificationResponse response = verificationService.createMyVerification(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                request
+        );
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
@@ -44,7 +46,9 @@ public class VerificationController {
     public ResponseEntity<ApiResponse<List<VerificationResponse>>> getMyVerifications(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return ResponseEntity.ok(ApiResponse.success(verificationService.getMyVerifications(currentUserId(userDetails))));
+        return ResponseEntity.ok(ApiResponse.success(
+                verificationService.getMyVerifications(AuthenticatedUserSupport.currentUserId(userDetails))
+        ));
     }
 
     @GetMapping("/{verificationRequestId}")
@@ -53,7 +57,7 @@ public class VerificationController {
             @PathVariable Long verificationRequestId
     ) {
         VerificationResponse response = verificationService.getMyVerification(
-                currentUserId(userDetails),
+                AuthenticatedUserSupport.currentUserId(userDetails),
                 verificationRequestId
         );
         return ResponseEntity.ok(ApiResponse.success(response));
@@ -66,7 +70,7 @@ public class VerificationController {
             @RequestPart MultipartFile file
     ) {
         VerificationFileResponse response = verificationService.uploadMyVerificationFile(
-                currentUserId(userDetails),
+                AuthenticatedUserSupport.currentUserId(userDetails),
                 verificationRequestId,
                 file
         );
@@ -79,7 +83,7 @@ public class VerificationController {
             @PathVariable Long verificationRequestId
     ) {
         return ResponseEntity.ok(ApiResponse.success(verificationService.getMyVerificationFiles(
-                currentUserId(userDetails),
+                AuthenticatedUserSupport.currentUserId(userDetails),
                 verificationRequestId
         )));
     }
@@ -89,14 +93,7 @@ public class VerificationController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long fileId
     ) {
-        verificationService.deleteMyVerificationFile(currentUserId(userDetails), fileId);
+        verificationService.deleteMyVerificationFile(AuthenticatedUserSupport.currentUserId(userDetails), fileId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.empty());
-    }
-
-    private Long currentUserId(CustomUserDetails userDetails) {
-        if (userDetails == null || userDetails.getUserId() == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED, "Authenticated user id is required.");
-        }
-        return userDetails.getUserId();
     }
 }

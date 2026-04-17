@@ -9,7 +9,7 @@ public record AuthSignupRequest(
 
     @Email(message = "invalid email format")
     @NotBlank(message = "email is required")
-    @Size(max = 255, message = "email must be 255 characters or fewer")
+    @Size(max = 510, message = "email must be 510 characters or fewer")
     String email,
 
     @NotBlank(message = "password is required")
@@ -17,10 +17,10 @@ public record AuthSignupRequest(
     String password,
 
     @NotBlank(message = "name is required")
-    @Size(max = 100, message = "name must be 100 characters or fewer")
+    @Size(max = 200, message = "name must be 200 characters or fewer")
     String name,
 
-    @Size(max = 20, message = "phone must be 20 characters or fewer")
+    @Size(max = 40, message = "phone must be 40 characters or fewer")
     @Pattern(regexp = "^[0-9+\\-() ]*$", message = "phone has invalid characters")
     String phone,
 

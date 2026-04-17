@@ -93,7 +93,7 @@ class FreelancerEpic5IntegrationTest {
                 true,
                 true,
                 Set.of("SEOUL_GANGNAM"),
-                Set.of("MORNING"),
+                Set.of(),
                 Set.of("HOSPITAL_COMPANION")
         );
 
@@ -205,7 +205,7 @@ class FreelancerEpic5IntegrationTest {
                 true,
                 true,
                 Set.of("SEOUL_GANGNAM"),
-                Set.of("MORNING"),
+                Set.of(),
                 Set.of("HOSPITAL_COMPANION")
         );
 
@@ -240,6 +240,30 @@ class FreelancerEpic5IntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("FILE_400_1"));
+    }
+
+    @Test
+    @DisplayName("profile rejects unsupported time slot codes")
+    void createProfileRejectsUnsupportedTimeSlotCode() throws Exception {
+        userRepository.save(createUser("invalid-slot@test.com", "ROLE_USER"));
+        String accessToken = login("invalid-slot@test.com");
+
+        FreelancerProfileUpsertRequest profileRequest = new FreelancerProfileUpsertRequest(
+                "career",
+                true,
+                true,
+                Set.of("SEOUL_GANGNAM"),
+                Set.of("MORNING"),
+                Set.of("HOSPITAL_COMPANION")
+        );
+
+        mockMvc.perform(post("/api/v1/freelancers/me/profile")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(profileRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("COMMON_400"))
+                .andExpect(jsonPath("$.error.message").value("availableTimeSlotCodes: unsupported code(s) [MORNING]"));
     }
 
     private String login(String email) throws Exception {

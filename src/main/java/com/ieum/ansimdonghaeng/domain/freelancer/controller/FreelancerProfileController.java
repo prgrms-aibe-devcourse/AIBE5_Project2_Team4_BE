@@ -1,8 +1,7 @@
 package com.ieum.ansimdonghaeng.domain.freelancer.controller;
 
-import com.ieum.ansimdonghaeng.common.exception.CustomException;
-import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.common.response.ApiResponse;
+import com.ieum.ansimdonghaeng.common.security.AuthenticatedUserSupport;
 import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
 import com.ieum.ansimdonghaeng.domain.freelancer.dto.request.FreelancerProfileUpsertRequest;
 import com.ieum.ansimdonghaeng.domain.freelancer.dto.response.FreelancerDetailResponse;
@@ -31,7 +30,10 @@ public class FreelancerProfileController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody FreelancerProfileUpsertRequest request
     ) {
-        FreelancerDetailResponse response = freelancerService.createMyProfile(currentUserId(userDetails), request);
+        FreelancerDetailResponse response = freelancerService.createMyProfile(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                request
+        );
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
@@ -39,7 +41,9 @@ public class FreelancerProfileController {
     public ResponseEntity<ApiResponse<FreelancerDetailResponse>> getMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return ResponseEntity.ok(ApiResponse.success(freelancerService.getMyProfile(currentUserId(userDetails))));
+        return ResponseEntity.ok(ApiResponse.success(
+                freelancerService.getMyProfile(AuthenticatedUserSupport.currentUserId(userDetails))
+        ));
     }
 
     @PatchMapping
@@ -47,13 +51,8 @@ public class FreelancerProfileController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody FreelancerProfileUpsertRequest request
     ) {
-        return ResponseEntity.ok(ApiResponse.success(freelancerService.updateMyProfile(currentUserId(userDetails), request)));
-    }
-
-    private Long currentUserId(CustomUserDetails userDetails) {
-        if (userDetails == null || userDetails.getUserId() == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED, "Authenticated user id is required.");
-        }
-        return userDetails.getUserId();
+        return ResponseEntity.ok(ApiResponse.success(
+                freelancerService.updateMyProfile(AuthenticatedUserSupport.currentUserId(userDetails), request)
+        ));
     }
 }

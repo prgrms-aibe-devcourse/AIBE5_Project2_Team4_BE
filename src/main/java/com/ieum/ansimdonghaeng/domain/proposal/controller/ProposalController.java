@@ -1,8 +1,7 @@
 package com.ieum.ansimdonghaeng.domain.proposal.controller;
 
-import com.ieum.ansimdonghaeng.common.exception.CustomException;
-import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.common.response.ApiResponse;
+import com.ieum.ansimdonghaeng.common.security.AuthenticatedUserSupport;
 import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
 import com.ieum.ansimdonghaeng.domain.proposal.dto.request.ProposalCreateRequest;
 import com.ieum.ansimdonghaeng.domain.proposal.dto.response.ProposalCreateResponse;
@@ -36,14 +35,11 @@ public class ProposalController {
             @PathVariable Long projectId,
             @Valid @RequestBody ProposalCreateRequest request
     ) {
-        ProposalCreateResponse response = proposalService.createProposal(currentUserId(userDetails), projectId, request);
+        ProposalCreateResponse response = proposalService.createProposal(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                projectId,
+                request
+        );
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
-    }
-
-    private Long currentUserId(CustomUserDetails userDetails) {
-        if (userDetails == null || userDetails.getUserId() == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED, "Authenticated user id is required.");
-        }
-        return userDetails.getUserId();
     }
 }

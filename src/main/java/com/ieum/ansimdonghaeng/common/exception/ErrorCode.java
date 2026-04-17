@@ -20,6 +20,7 @@ public enum ErrorCode {
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT_404_1", "Report was not found."),
     VERIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "VERIFICATION_404_1", "Verification was not found."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE_404_1", "Notice was not found."),
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_404_1", "Notification was not found."),
     VERIFICATION_DUPLICATE(HttpStatus.CONFLICT, "VERIFICATION_409_1", "Pending verification request already exists."),
     FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "FILE_404_1", "File was not found."),
     FILE_INVALID_TYPE(HttpStatus.BAD_REQUEST, "FILE_400_1", "File type is not allowed."),

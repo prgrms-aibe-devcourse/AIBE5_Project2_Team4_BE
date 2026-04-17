@@ -95,6 +95,24 @@ class ProposalControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("freelancerProfileId missing returns validation 400")
+    void createProposalFailsWhenFreelancerProfileIdMissing() throws Exception {
+        User owner = userRepository.save(createUser("owner-missing-profile@test.com", "owner", "ROLE_USER"));
+        Project project = projectRepository.save(createProject(owner));
+
+        mockMvc.perform(post("/api/v1/projects/{projectId}/proposals", project.getId())
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "message", "freelancer id missing"
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("COMMON_400"))
+                .andExpect(jsonPath("$.error.message").value("freelancerProfileId: freelancerProfileId is required"));
+    }
+
+    @Test
     @DisplayName("같은 프로젝트와 프리랜서 조합으로 중복 제안을 만들 수 없다")
     void createProposalFailsWhenDuplicate() throws Exception {
         User owner = userRepository.save(createUser("owner-dup@test.com", "프로젝트 사용자", "ROLE_USER"));

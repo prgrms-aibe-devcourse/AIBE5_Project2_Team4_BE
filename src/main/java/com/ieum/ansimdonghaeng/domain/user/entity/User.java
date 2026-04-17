@@ -20,16 +20,16 @@ public class User extends BaseAuditEntity {
     @Column(name = "USER_ID")
     private Long id;
 
-    @Column(name = "EMAIL", nullable = false, unique = true, length = 255)
+    @Column(name = "EMAIL", nullable = false, unique = true, length = 510)
     private String email;
 
-    @Column(name = "PASSWORD_HASH", nullable = false, length = 255)
+    @Column(name = "PASSWORD_HASH", nullable = false, length = 510)
     private String passwordHash;
 
-    @Column(name = "NAME", nullable = false, length = 100)
+    @Column(name = "NAME", nullable = false, length = 200)
     private String name;
 
-    @Column(name = "PHONE", length = 20)
+    @Column(name = "PHONE", length = 40)
     private String phone;
 
     @Lob

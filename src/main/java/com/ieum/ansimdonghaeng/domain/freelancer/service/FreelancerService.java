@@ -2,6 +2,7 @@ package com.ieum.ansimdonghaeng.domain.freelancer.service;
 
 import com.ieum.ansimdonghaeng.common.exception.CustomException;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
+import com.ieum.ansimdonghaeng.domain.code.service.CodeValidationService;
 import com.ieum.ansimdonghaeng.domain.freelancer.dto.request.FreelancerProfileUpsertRequest;
 import com.ieum.ansimdonghaeng.domain.freelancer.dto.response.FreelancerDetailResponse;
 import com.ieum.ansimdonghaeng.domain.freelancer.dto.response.FreelancerFileResponse;
@@ -32,6 +33,7 @@ public class FreelancerService {
     private final FreelancerFileRepository freelancerFileRepository;
     private final UserRepository userRepository;
     private final FreelancerFileStorageService fileStorageService;
+    private final CodeValidationService codeValidationService;
 
     @Transactional
     public FreelancerDetailResponse createMyProfile(Long currentUserId, FreelancerProfileUpsertRequest request) {
@@ -46,6 +48,7 @@ public class FreelancerService {
             throw new CustomException(ErrorCode.USER_INACTIVE);
         }
 
+        validateProfileCodes(request);
         user.changeRole(UserRole.FREELANCER);
         FreelancerProfile profile = FreelancerProfile.create(
                 user,
@@ -69,6 +72,7 @@ public class FreelancerService {
     @Transactional
     public FreelancerDetailResponse updateMyProfile(Long currentUserId, FreelancerProfileUpsertRequest request) {
         FreelancerProfile profile = getMyFreelancerProfile(currentUserId);
+        validateProfileCodes(request);
         profile.update(
                 request.careerDescription(),
                 request.caregiverYn(),
@@ -149,5 +153,14 @@ public class FreelancerService {
         }
 
         return profile;
+    }
+
+    private void validateProfileCodes(FreelancerProfileUpsertRequest request) {
+        codeValidationService.validateRegionCodes(request.activityRegionCodes(), "activityRegionCodes");
+        codeValidationService.validateAvailableTimeSlotCodes(
+                request.availableTimeSlotCodes(),
+                "availableTimeSlotCodes"
+        );
+        codeValidationService.validateProjectTypeCodes(request.projectTypeCodes(), "projectTypeCodes");
     }
 }

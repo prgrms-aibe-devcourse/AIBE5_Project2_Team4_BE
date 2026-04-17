@@ -43,11 +43,11 @@ public class VerificationRequest extends BaseAuditEntity {
     private FreelancerProfile freelancerProfile;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "VERIFICATION_TYPE_CODE", nullable = false, length = 30)
+    @Column(name = "VERIFICATION_TYPE_CODE", nullable = false, length = 60)
     private VerificationType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "STATUS_CODE", nullable = false, length = 20)
+    @Column(name = "STATUS_CODE", nullable = false, length = 40)
     private VerificationStatus status;
 
     @Lob

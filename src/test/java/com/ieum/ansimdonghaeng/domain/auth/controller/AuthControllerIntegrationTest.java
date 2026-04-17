@@ -104,6 +104,27 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("inactive user login is rejected")
+    void loginFailsForInactiveUser() throws Exception {
+        userRepository.save(User.builder()
+                .email("inactive@test.com")
+                .passwordHash(passwordEncoder.encode("1234"))
+                .name("inactive-user")
+                .roleCode("ROLE_USER")
+                .activeYn(false)
+                .build());
+
+        AuthLoginRequest request = new AuthLoginRequest("inactive@test.com", "1234");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_403"));
+    }
+
+    @Test
     @DisplayName("login accepts the legacy username field for backward compatibility")
     void loginAcceptsLegacyUsernameAlias() throws Exception {
         userRepository.save(User.builder()

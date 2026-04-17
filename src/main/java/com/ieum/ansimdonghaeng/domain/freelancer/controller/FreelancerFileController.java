@@ -1,8 +1,7 @@
 package com.ieum.ansimdonghaeng.domain.freelancer.controller;
 
-import com.ieum.ansimdonghaeng.common.exception.CustomException;
-import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.common.response.ApiResponse;
+import com.ieum.ansimdonghaeng.common.security.AuthenticatedUserSupport;
 import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
 import com.ieum.ansimdonghaeng.domain.freelancer.dto.response.FreelancerFileResponse;
 import com.ieum.ansimdonghaeng.domain.freelancer.service.FreelancerService;
@@ -34,7 +33,10 @@ public class FreelancerFileController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestPart MultipartFile file
     ) {
-        FreelancerFileResponse response = freelancerService.uploadMyFile(currentUserId(userDetails), file);
+        FreelancerFileResponse response = freelancerService.uploadMyFile(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                file
+        );
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
@@ -42,7 +44,9 @@ public class FreelancerFileController {
     public ResponseEntity<ApiResponse<List<FreelancerFileResponse>>> getMyFiles(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return ResponseEntity.ok(ApiResponse.success(freelancerService.getMyFiles(currentUserId(userDetails))));
+        return ResponseEntity.ok(ApiResponse.success(
+                freelancerService.getMyFiles(AuthenticatedUserSupport.currentUserId(userDetails))
+        ));
     }
 
     @DeleteMapping("/{fileId}")
@@ -50,14 +54,7 @@ public class FreelancerFileController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long fileId
     ) {
-        freelancerService.deleteMyFile(currentUserId(userDetails), fileId);
+        freelancerService.deleteMyFile(AuthenticatedUserSupport.currentUserId(userDetails), fileId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.empty());
-    }
-
-    private Long currentUserId(CustomUserDetails userDetails) {
-        if (userDetails == null || userDetails.getUserId() == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED, "Authenticated user id is required.");
-        }
-        return userDetails.getUserId();
     }
 }

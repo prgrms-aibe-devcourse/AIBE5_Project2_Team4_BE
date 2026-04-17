@@ -69,17 +69,17 @@ public class FreelancerProfile extends BaseAuditEntity {
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "FREELANCER_ACTIVITY_REGION", joinColumns = @JoinColumn(name = "FREELANCER_PROFILE_ID"))
-    @Column(name = "REGION_CODE", nullable = false, length = 20)
+    @Column(name = "REGION_CODE", nullable = false, length = 40)
     private Set<String> activityRegionCodes = new LinkedHashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "FREELANCER_AVAILABLE_SLOT", joinColumns = @JoinColumn(name = "FREELANCER_PROFILE_ID"))
-    @Column(name = "TIME_SLOT_CODE", nullable = false, length = 30)
+    @Column(name = "TIME_SLOT_CODE", nullable = false, length = 60)
     private Set<String> availableTimeSlotCodes = new LinkedHashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "FREELANCER_PROJECT_TYPE", joinColumns = @JoinColumn(name = "FREELANCER_PROFILE_ID"))
-    @Column(name = "PROJECT_TYPE_CODE", nullable = false, length = 30)
+    @Column(name = "PROJECT_TYPE_CODE", nullable = false, length = 60)
     private Set<String> projectTypeCodes = new LinkedHashSet<>();
 
     @Builder(access = AccessLevel.PRIVATE)

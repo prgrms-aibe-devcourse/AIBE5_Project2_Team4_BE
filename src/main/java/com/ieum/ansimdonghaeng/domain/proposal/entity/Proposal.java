@@ -45,7 +45,7 @@ public class Proposal extends BaseAuditEntity {
     @Column(name = "STATUS_CODE", nullable = false, length = 20)
     private ProposalStatus status;
 
-    @Column(name = "MESSAGE", length = 1000)
+    @Column(name = "MESSAGE", length = 2000)
     private String message;
 
     @Column(name = "RESPONDED_AT")

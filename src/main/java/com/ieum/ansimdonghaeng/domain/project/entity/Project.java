@@ -43,15 +43,15 @@ public class Project extends BaseAuditEntity {
     @JoinColumn(name = "OWNER_USER_ID", insertable = false, updatable = false, foreignKey = @ForeignKey(value = jakarta.persistence.ConstraintMode.NO_CONSTRAINT))
     private User ownerUser;
 
-    @Column(name = "TITLE", nullable = false, length = 200)
+    @Column(name = "TITLE", nullable = false, length = 400)
     private String title;
 
     // TODO: 공통 코드 도메인이 정리되면 FK나 enum 연동을 검토한다.
-    @Column(name = "PROJECT_TYPE_CODE", nullable = false, length = 30)
+    @Column(name = "PROJECT_TYPE_CODE", nullable = false, length = 60)
     private String projectTypeCode;
 
     // TODO: 공통 코드 도메인이 정리되면 FK나 enum 연동을 검토한다.
-    @Column(name = "SERVICE_REGION_CODE", nullable = false, length = 20)
+    @Column(name = "SERVICE_REGION_CODE", nullable = false, length = 40)
     private String serviceRegionCode;
 
     @Column(name = "REQUESTED_START_AT", nullable = false)
@@ -60,10 +60,10 @@ public class Project extends BaseAuditEntity {
     @Column(name = "REQUESTED_END_AT", nullable = false)
     private LocalDateTime requestedEndAt;
 
-    @Column(name = "SERVICE_ADDRESS", nullable = false, length = 300)
+    @Column(name = "SERVICE_ADDRESS", nullable = false, length = 600)
     private String serviceAddress;
 
-    @Column(name = "SERVICE_DETAIL_ADDRESS", length = 300)
+    @Column(name = "SERVICE_DETAIL_ADDRESS", length = 600)
     private String serviceDetailAddress;
 
     // Oracle 스키마에서 요청 상세는 CLOB으로 관리한다.

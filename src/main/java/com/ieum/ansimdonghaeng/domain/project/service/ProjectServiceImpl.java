@@ -2,6 +2,7 @@ package com.ieum.ansimdonghaeng.domain.project.service;
 
 import com.ieum.ansimdonghaeng.common.exception.CustomException;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
+import com.ieum.ansimdonghaeng.domain.code.service.CodeValidationService;
 import com.ieum.ansimdonghaeng.domain.project.dto.request.ProjectCancelRequest;
 import com.ieum.ansimdonghaeng.domain.project.dto.request.ProjectCreateRequest;
 import com.ieum.ansimdonghaeng.domain.project.dto.request.ProjectUpdateRequest;
@@ -27,12 +28,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final CodeValidationService codeValidationService;
 
     // 프로젝트 생성 시 기본 상태와 시간 범위를 함께 검증한다.
     @Override
     @Transactional
     public ProjectCreateResponse createProject(Long currentUserId, ProjectCreateRequest request) {
         validateTimeRange(request.requestedStartAt(), request.requestedEndAt());
+        validateProjectCodes(request.projectTypeCode(), request.serviceRegionCode());
 
         Project project = Project.create(
                 currentUserId,
@@ -81,6 +84,10 @@ public class ProjectServiceImpl implements ProjectService {
                 ? request.requestedEndAt()
                 : project.getRequestedEndAt();
         validateTimeRange(requestedStartAt, requestedEndAt);
+        validateProjectCodes(
+                request.projectTypeCode() != null ? request.projectTypeCode() : project.getProjectTypeCode(),
+                request.serviceRegionCode() != null ? request.serviceRegionCode() : project.getServiceRegionCode()
+        );
 
         project.update(
                 request.title() != null ? request.title() : project.getTitle(),
@@ -130,5 +137,10 @@ public class ProjectServiceImpl implements ProjectService {
         if (!requestedEndAt.isAfter(requestedStartAt)) {
             throw new CustomException(ErrorCode.PROJECT_INVALID_TIME_RANGE);
         }
+    }
+
+    private void validateProjectCodes(String projectTypeCode, String serviceRegionCode) {
+        codeValidationService.validateProjectTypeCode(projectTypeCode, "projectTypeCode");
+        codeValidationService.validateRegionCode(serviceRegionCode, "serviceRegionCode");
     }
 }

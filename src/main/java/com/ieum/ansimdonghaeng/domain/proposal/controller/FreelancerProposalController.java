@@ -1,8 +1,7 @@
 package com.ieum.ansimdonghaeng.domain.proposal.controller;
 
-import com.ieum.ansimdonghaeng.common.exception.CustomException;
-import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.common.response.ApiResponse;
+import com.ieum.ansimdonghaeng.common.security.AuthenticatedUserSupport;
 import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
 import com.ieum.ansimdonghaeng.domain.proposal.dto.response.ProposalDetailResponse;
 import com.ieum.ansimdonghaeng.domain.proposal.dto.response.ProposalListResponse;
@@ -41,7 +40,12 @@ public class FreelancerProposalController {
             @PositiveOrZero @RequestParam(defaultValue = "0") int page,
             @Positive @RequestParam(defaultValue = "10") int size
     ) {
-        ProposalListResponse response = proposalService.getMyProposals(currentUserId(userDetails), status, page, size);
+        ProposalListResponse response = proposalService.getMyProposals(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                status,
+                page,
+                size
+        );
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -53,7 +57,10 @@ public class FreelancerProposalController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long proposalId
     ) {
-        ProposalDetailResponse response = proposalService.getMyProposal(currentUserId(userDetails), proposalId);
+        ProposalDetailResponse response = proposalService.getMyProposal(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                proposalId
+        );
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -65,14 +72,10 @@ public class FreelancerProposalController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long proposalId
     ) {
-        ProposalDetailResponse response = proposalService.acceptProposal(currentUserId(userDetails), proposalId);
+        ProposalDetailResponse response = proposalService.acceptProposal(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                proposalId
+        );
         return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    private Long currentUserId(CustomUserDetails userDetails) {
-        if (userDetails == null || userDetails.getUserId() == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED, "Authenticated user id is required.");
-        }
-        return userDetails.getUserId();
     }
 }

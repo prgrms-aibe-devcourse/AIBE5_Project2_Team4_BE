@@ -39,7 +39,7 @@ public class RefreshToken extends BaseAuditEntity {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
-    @Column(name = "TOKEN_VALUE", nullable = false, length = 1000)
+    @Column(name = "TOKEN_VALUE", nullable = false, length = 2000)
     private String tokenValue;
 
     @Column(name = "EXPIRES_AT", nullable = false)

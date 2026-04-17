@@ -180,7 +180,7 @@ public class AdminVerificationService {
 
         User adminUser = userRepository.findById(adminUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "Admin user was not found."));
-        verification.reject(adminUser, request.reason(), java.time.LocalDateTime.now());
+        verification.reject(adminUser, request.reviewComment(), java.time.LocalDateTime.now());
         verificationRepository.flush();
         FreelancerProfile profile = verification.getFreelancerProfile();
         boolean hasApprovedVerification = verificationRepository.existsByFreelancerProfile_IdAndStatus(
