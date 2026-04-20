@@ -59,11 +59,11 @@ class Epic7NotificationIntegrationTest extends AdminIntegrationTestSupport {
                 .andExpect(status().isOk());
 
         mockMvc.perform(patch("/api/v1/projects/{projectId}/start", project.getId())
-                        .with(userPrincipal(owner)))
+                        .with(freelancerPrincipal(freelancerUser)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(patch("/api/v1/projects/{projectId}/complete", project.getId())
-                        .with(userPrincipal(owner)))
+                        .with(freelancerPrincipal(freelancerUser)))
                 .andExpect(status().isOk());
 
         assertThat(notificationRepository.findAll())

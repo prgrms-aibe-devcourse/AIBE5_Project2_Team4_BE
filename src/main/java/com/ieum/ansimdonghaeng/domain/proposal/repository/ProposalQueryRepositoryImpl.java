@@ -1,7 +1,9 @@
 package com.ieum.ansimdonghaeng.domain.proposal.repository;
 
+import static com.ieum.ansimdonghaeng.domain.freelancer.entity.QFreelancerProfile.freelancerProfile;
 import static com.ieum.ansimdonghaeng.domain.project.entity.QProject.project;
 import static com.ieum.ansimdonghaeng.domain.proposal.entity.QProposal.proposal;
+import static com.ieum.ansimdonghaeng.domain.user.entity.QUser.user;
 
 import com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus;
 import com.querydsl.core.types.Projections;
@@ -50,6 +52,44 @@ public class ProposalQueryRepositoryImpl implements ProposalQueryRepository {
                 .select(proposal.count())
                 .from(proposal)
                 .where(proposal.freelancerProfile.id.eq(freelancerProfileId), statusCondition)
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total == null ? 0 : total);
+    }
+
+    @Override
+    public Page<ProjectProposalSummaryView> findProjectOwnerProposals(Long projectId, ProposalStatus status, Pageable pageable) {
+        BooleanExpression statusCondition = status == null ? null : proposal.status.eq(status);
+
+        List<ProjectProposalSummaryView> content = queryFactory
+                .select(Projections.constructor(
+                        ProjectProposalSummaryView.class,
+                        proposal.id,
+                        project.id,
+                        freelancerProfile.id,
+                        user.id,
+                        user.name,
+                        freelancerProfile.verifiedYn,
+                        freelancerProfile.averageRating,
+                        proposal.status,
+                        proposal.message,
+                        proposal.createdAt,
+                        proposal.respondedAt
+                ))
+                .from(proposal)
+                .join(proposal.project, project)
+                .join(proposal.freelancerProfile, freelancerProfile)
+                .join(freelancerProfile.user, user)
+                .where(project.id.eq(projectId), statusCondition)
+                .orderBy(proposal.createdAt.desc(), proposal.id.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(proposal.count())
+                .from(proposal)
+                .where(proposal.project.id.eq(projectId), statusCondition)
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total == null ? 0 : total);

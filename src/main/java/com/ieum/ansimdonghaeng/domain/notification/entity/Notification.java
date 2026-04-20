@@ -103,61 +103,97 @@ public class Notification {
         this.readAt = readAt;
     }
 
-    public static Notification notice(User user, Notice notice, String content) {
+    public static Notification create(User user,
+                                      NotificationType notificationType,
+                                      String title,
+                                      String content,
+                                      Long relatedProjectId,
+                                      Long relatedProposalId,
+                                      Long relatedReviewId,
+                                      Long relatedNoticeId,
+                                      Long relatedVerificationId) {
         return Notification.builder()
                 .user(user)
-                .notificationType(NotificationType.NOTICE)
-                .title(notice.getTitle())
+                .notificationType(notificationType)
+                .title(title)
                 .content(content)
                 .readYn(false)
-                .relatedNoticeId(notice.getId())
+                .relatedProjectId(relatedProjectId)
+                .relatedProposalId(relatedProposalId)
+                .relatedReviewId(relatedReviewId)
+                .relatedNoticeId(relatedNoticeId)
+                .relatedVerificationId(relatedVerificationId)
                 .build();
     }
 
     public static Notification proposalReceived(User user, Proposal proposal, String title, String content) {
-        return Notification.builder()
-                .user(user)
-                .notificationType(NotificationType.PROPOSAL_RECEIVED)
-                .title(title)
-                .content(content)
-                .readYn(false)
-                .relatedProjectId(proposal.getProject().getId())
-                .relatedProposalId(proposal.getId())
-                .build();
+        return create(
+                user,
+                NotificationType.PROPOSAL_RECEIVED,
+                title,
+                content,
+                proposal.getProject().getId(),
+                proposal.getId(),
+                null,
+                null,
+                null
+        );
     }
 
     public static Notification proposalAccepted(User user, Proposal proposal, String title, String content) {
-        return Notification.builder()
-                .user(user)
-                .notificationType(NotificationType.PROPOSAL_ACCEPTED)
-                .title(title)
-                .content(content)
-                .readYn(false)
-                .relatedProjectId(proposal.getProject().getId())
-                .relatedProposalId(proposal.getId())
-                .build();
+        return create(
+                user,
+                NotificationType.PROPOSAL_ACCEPTED,
+                title,
+                content,
+                proposal.getProject().getId(),
+                proposal.getId(),
+                null,
+                null,
+                null
+        );
     }
 
     public static Notification projectStatusChanged(User user, Project project, String title, String content) {
-        return Notification.builder()
-                .user(user)
-                .notificationType(NotificationType.PROJECT_STATUS_CHANGED)
-                .title(title)
-                .content(content)
-                .readYn(false)
-                .relatedProjectId(project.getId())
-                .build();
+        return create(
+                user,
+                NotificationType.PROJECT_STATUS_CHANGED,
+                title,
+                content,
+                project.getId(),
+                null,
+                null,
+                null,
+                null
+        );
     }
 
     public static Notification reviewRequest(User user, Project project, String title, String content) {
-        return Notification.builder()
-                .user(user)
-                .notificationType(NotificationType.REVIEW_REQUEST)
-                .title(title)
-                .content(content)
-                .readYn(false)
-                .relatedProjectId(project.getId())
-                .build();
+        return create(
+                user,
+                NotificationType.REVIEW_REQUEST,
+                title,
+                content,
+                project.getId(),
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    public static Notification notice(User user, Notice notice, String content) {
+        return create(
+                user,
+                NotificationType.NOTICE,
+                notice.getTitle(),
+                content,
+                null,
+                null,
+                null,
+                notice.getId(),
+                null
+        );
     }
 
     public boolean isOwnedBy(Long userId) {

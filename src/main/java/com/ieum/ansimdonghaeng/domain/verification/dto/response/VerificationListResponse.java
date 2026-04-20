@@ -1,6 +1,6 @@
 package com.ieum.ansimdonghaeng.domain.verification.dto.response;
 
-import com.ieum.ansimdonghaeng.domain.verification.entity.VerificationRequest;
+import com.ieum.ansimdonghaeng.domain.verification.entity.Verification;
 import java.util.List;
 import org.springframework.data.domain.Page;
 
@@ -13,7 +13,7 @@ public record VerificationListResponse(
         boolean hasNext
 ) {
 
-    public static VerificationListResponse from(Page<VerificationRequest> verificationPage) {
+    public static VerificationListResponse from(Page<Verification> verificationPage) {
         return new VerificationListResponse(
                 verificationPage.getContent().stream()
                         .map(VerificationResponse::from)

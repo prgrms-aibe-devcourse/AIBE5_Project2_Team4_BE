@@ -2,6 +2,7 @@ package com.ieum.ansimdonghaeng.domain.verification.repository;
 
 import com.ieum.ansimdonghaeng.domain.verification.entity.Verification;
 import com.ieum.ansimdonghaeng.domain.verification.entity.VerificationStatus;
+import com.ieum.ansimdonghaeng.domain.verification.entity.VerificationType;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +20,13 @@ public interface VerificationRepository extends JpaRepository<Verification, Long
 
     long countByStatus(VerificationStatus status);
 
+    long countByFreelancerProfile_IdAndStatus(Long freelancerProfileId, VerificationStatus status);
+
     boolean existsByFreelancerProfile_IdAndStatus(Long freelancerProfileId, VerificationStatus status);
+
+    boolean existsByFreelancerProfile_IdAndVerificationTypeAndStatus(Long freelancerProfileId,
+                                                                     VerificationType verificationType,
+                                                                     VerificationStatus status);
 
     @Override
     Page<Verification> findAll(Specification<Verification> spec, Pageable pageable);
@@ -56,4 +63,18 @@ public interface VerificationRepository extends JpaRepository<Verification, Long
             order by verification.requestedAt desc, verification.id desc
             """)
     List<Verification> findRecentByFreelancerProfileId(@Param("freelancerProfileId") Long freelancerProfileId);
+
+    @EntityGraph(attributePaths = {"freelancerProfile", "freelancerProfile.user", "reviewedByUser"})
+    @Query("""
+            select verification
+            from Verification verification
+            join verification.freelancerProfile profile
+            join profile.user user
+            where user.id = :userId
+            order by verification.requestedAt desc, verification.id desc
+            """)
+    List<Verification> findAllByUserId(@Param("userId") Long userId);
+
+    @EntityGraph(attributePaths = {"freelancerProfile", "freelancerProfile.user", "reviewedByUser"})
+    Optional<Verification> findTopByFreelancerProfile_IdOrderByRequestedAtDescIdDesc(Long freelancerProfileId);
 }

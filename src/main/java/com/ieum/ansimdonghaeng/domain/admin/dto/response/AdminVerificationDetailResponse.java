@@ -23,9 +23,10 @@ public record AdminVerificationDetailResponse(
             Long verificationFileId,
             String originalName,
             String storedName,
-            String fileUrl,
             String contentType,
             Long fileSize,
+            String viewUrl,
+            String downloadUrl,
             LocalDateTime uploadedAt
     ) {
     }

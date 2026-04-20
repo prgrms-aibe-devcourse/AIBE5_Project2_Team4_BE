@@ -48,6 +48,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/public-profile").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/freelancers", "/api/v1/freelancers/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/freelancers/*/reviews").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reviews/tag-codes").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/notices", "/api/v1/notices/*").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/v1/freelancers/me/**").authenticated()

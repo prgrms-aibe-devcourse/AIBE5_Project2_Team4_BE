@@ -15,79 +15,39 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
 
     long countByBlindedYn(String blindedYn);
 
-    long countByReviewerUser_Id(Long reviewerUserId);
+    long countByReviewerUserId(Long reviewerUserId);
 
     @Override
     Page<Review> findAll(Specification<Review> spec, Pageable pageable);
 
     boolean existsByProject_Id(Long projectId);
 
-    @EntityGraph(attributePaths = {"project", "reviewerUser"})
+    @EntityGraph(attributePaths = {"project", "reviewerUser", "tags"})
     Optional<Review> findByProject_Id(Long projectId);
 
-    @EntityGraph(attributePaths = {"project", "reviewerUser"})
-    Optional<Review> findById(Long reviewId);
+    @EntityGraph(attributePaths = {"project", "project.ownerUser", "reviewerUser", "tags"})
+    Page<Review> findAllByReviewerUserIdOrderByCreatedAtDescIdDesc(Long reviewerUserId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"project", "reviewerUser"})
-    Page<Review> findAllByReviewerUser_IdOrderByCreatedAtDescIdDesc(Long reviewerUserId, Pageable pageable);
-
-    @Query(value = """
+    @EntityGraph(attributePaths = {"project", "project.ownerUser", "reviewerUser", "tags"})
+    @Query("""
             select review
             from Review review
             join review.project project
-            where review.blindedYn = 'N'
-              and exists (
-                  select 1
-                  from Proposal proposal
-                  where proposal.project = project
-                    and proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
-                    and proposal.freelancerProfile.id = :freelancerProfileId
-              )
+            join com.ieum.ansimdonghaeng.domain.proposal.entity.Proposal proposal
+              on proposal.project = project
+            where proposal.freelancerProfile.id = :freelancerProfileId
+              and proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
+              and review.blindedYn = 'N'
             order by review.createdAt desc, review.id desc
-            """,
-            countQuery = """
-                    select count(review)
-                    from Review review
-                    join review.project project
-                    where review.blindedYn = 'N'
-                      and exists (
-                          select 1
-                          from Proposal proposal
-                          where proposal.project = project
-                            and proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
-                            and proposal.freelancerProfile.id = :freelancerProfileId
-                      )
-                    """)
-    @EntityGraph(attributePaths = {"project", "reviewerUser"})
-    Page<Review> findVisibleByFreelancerProfileId(@Param("freelancerProfileId") Long freelancerProfileId, Pageable pageable);
-
-    @Query("""
-            select count(review)
-            from Review review
-            join review.project project
-            where review.blindedYn = 'N'
-              and exists (
-                  select 1
-                  from Proposal proposal
-                  where proposal.project = project
-                    and proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
-                    and proposal.freelancerProfile.id = :freelancerProfileId
-              )
             """)
-    long countVisibleByFreelancerProfileId(@Param("freelancerProfileId") Long freelancerProfileId);
+    Page<Review> findPublicReviewsByFreelancerProfileId(@Param("freelancerProfileId") Long freelancerProfileId,
+                                                        Pageable pageable);
 
+    @EntityGraph(attributePaths = {"project", "project.ownerUser", "reviewerUser", "tags"})
     @Query("""
-            select avg(review.rating)
+            select review
             from Review review
-            join review.project project
-            where review.blindedYn = 'N'
-              and exists (
-                  select 1
-                  from Proposal proposal
-                  where proposal.project = project
-                    and proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
-                    and proposal.freelancerProfile.id = :freelancerProfileId
-              )
+            where review.id = :reviewId
             """)
-    Double averageRatingByFreelancerProfileId(@Param("freelancerProfileId") Long freelancerProfileId);
+    Optional<Review> findDetailById(@Param("reviewId") Long reviewId);
 }

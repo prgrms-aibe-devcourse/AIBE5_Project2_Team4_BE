@@ -9,6 +9,7 @@ import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminFreelancerDetailRe
 import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminFreelancerListItemResponse;
 import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminFreelancerStateResponse;
 import com.ieum.ansimdonghaeng.domain.admin.support.AdminPageQuerySupport;
+import com.ieum.ansimdonghaeng.domain.file.support.FileKeySupport;
 import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerProfile;
 import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
 import com.ieum.ansimdonghaeng.domain.verification.entity.Verification;
@@ -174,14 +175,18 @@ public class AdminFreelancerService {
                 .flatMap(verificationId -> verificationFileRepository.findAllByVerification_IdOrderByUploadedAtAsc(verificationId)
                         .stream())
                 .limit(5)
-                .map(file -> new AdminFreelancerDetailResponse.PortfolioFileResponse(
-                        file.getId(),
-                        file.getOriginalName(),
-                        file.getFileUrl(),
-                        file.getContentType(),
-                        file.getFileSize(),
-                        file.getUploadedAt()
-                ))
+                .map(file -> {
+                    String fileKey = FileKeySupport.verificationKey(file.getId());
+                    return new AdminFreelancerDetailResponse.PortfolioFileResponse(
+                            file.getId(),
+                            file.getOriginalName(),
+                            file.getContentType(),
+                            file.getFileSize(),
+                            FileKeySupport.viewUrl(fileKey),
+                            FileKeySupport.downloadUrl(fileKey),
+                            file.getUploadedAt()
+                    );
+                })
                 .toList();
 
         return new AdminFreelancerDetailResponse(

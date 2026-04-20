@@ -18,6 +18,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -101,6 +102,10 @@ public class Verification extends BaseAuditEntity {
 
     public boolean isPending() {
         return status == VerificationStatus.PENDING;
+    }
+
+    public boolean isOwnedBy(Long userId) {
+        return Objects.equals(freelancerProfile.getUser().getId(), userId);
     }
 
     public void approve(User adminUser, LocalDateTime reviewedAt) {

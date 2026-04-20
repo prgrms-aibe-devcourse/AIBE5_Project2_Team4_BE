@@ -35,7 +35,6 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProposalRepository proposalRepository;
     private final NotificationService notificationService;
 
-    // 프로젝트 생성 시 기본 상태와 시간 범위를 함께 검증한다.
     @Override
     @Transactional
     public ProjectCreateResponse createProject(Long currentUserId, ProjectCreateRequest request) {
@@ -57,7 +56,6 @@ public class ProjectServiceImpl implements ProjectService {
         return ProjectCreateResponse.from(projectRepository.save(project));
     }
 
-    // 목록 조회는 owner 기준과 createdAt 내림차순 정렬을 기본으로 사용한다.
     @Override
     public ProjectListResponse getMyProjects(Long currentUserId, ProjectStatus status, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -65,13 +63,11 @@ public class ProjectServiceImpl implements ProjectService {
         return ProjectListResponse.from(projectPage);
     }
 
-    // 상세 조회는 존재 여부와 소유권을 분리해 404/403을 정확히 반환한다.
     @Override
     public ProjectDetailResponse getProject(Long currentUserId, Long projectId) {
         return ProjectDetailResponse.from(getOwnedProject(projectId, currentUserId));
     }
 
-    // 부분 수정은 전달값만 반영하되 최종 시간 범위를 다시 검증한다.
     @Override
     @Transactional
     public ProjectDetailResponse updateProject(Long currentUserId, Long projectId, ProjectUpdateRequest request) {
@@ -110,7 +106,6 @@ public class ProjectServiceImpl implements ProjectService {
         return ProjectDetailResponse.from(project);
     }
 
-    // 취소는 REQUESTED 상태에서만 가능하며 취소 사유와 시각을 함께 저장한다.
     @Override
     @Transactional
     public ProjectCancelResponse cancelProject(Long currentUserId, Long projectId, ProjectCancelRequest request) {
@@ -123,27 +118,34 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    public ProjectDetailResponse startProject(Long currentUserId, Long projectId) {
-        Project project = getOwnedProjectForUpdate(projectId, currentUserId);
+    public ProjectDetailResponse startProject(Long currentUserId, boolean adminOverride, Long projectId) {
+        Project project = projectRepository.findByIdForUpdate(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND));
         if (!project.isAcceptedStatus()) {
             throw new CustomException(ErrorCode.PROJECT_INVALID_STATUS);
         }
 
+        Proposal acceptedProposal = getAcceptedProposal(projectId);
+        validateAssignedFreelancer(currentUserId, adminOverride, acceptedProposal);
+
         project.start(LocalDateTime.now());
-        notificationService.notifyProjectStatusChanged(project, getAcceptedProposal(project.getId()));
+        notificationService.notifyProjectStatusChanged(project, acceptedProposal);
         return ProjectDetailResponse.from(project);
     }
 
     @Override
     @Transactional
-    public ProjectDetailResponse completeProject(Long currentUserId, Long projectId) {
-        Project project = getOwnedProjectForUpdate(projectId, currentUserId);
+    public ProjectDetailResponse completeProject(Long currentUserId, boolean adminOverride, Long projectId) {
+        Project project = projectRepository.findByIdForUpdate(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND));
         if (!project.isInProgressStatus()) {
             throw new CustomException(ErrorCode.PROJECT_INVALID_STATUS);
         }
 
+        Proposal acceptedProposal = getAcceptedProposal(projectId);
+        validateAssignedFreelancer(currentUserId, adminOverride, acceptedProposal);
+
         project.complete(LocalDateTime.now());
-        Proposal acceptedProposal = getAcceptedProposal(project.getId());
         notificationService.notifyProjectStatusChanged(project, acceptedProposal);
         notificationService.notifyReviewRequest(project);
         return ProjectDetailResponse.from(project);
@@ -160,15 +162,20 @@ public class ProjectServiceImpl implements ProjectService {
         return project;
     }
 
-    private Project getOwnedProjectForUpdate(Long projectId, Long currentUserId) {
-        Project project = projectRepository.findByIdForUpdate(projectId)
-                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND));
+    private Proposal getAcceptedProposal(Long projectId) {
+        return proposalRepository.findAcceptedProposalByProjectId(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROPOSAL_NOT_FOUND));
+    }
 
-        if (!project.isOwnedBy(currentUserId)) {
-            throw new CustomException(ErrorCode.PROJECT_ACCESS_DENIED);
+    private void validateAssignedFreelancer(Long currentUserId, boolean adminOverride, Proposal acceptedProposal) {
+        if (adminOverride) {
+            return;
         }
 
-        return project;
+        Long assignedUserId = acceptedProposal.getFreelancerProfile().getUser().getId();
+        if (!assignedUserId.equals(currentUserId)) {
+            throw new CustomException(ErrorCode.PROJECT_ACCESS_DENIED);
+        }
     }
 
     private void validateRequestedStatus(Project project) {
@@ -186,10 +193,5 @@ public class ProjectServiceImpl implements ProjectService {
     private void validateProjectCodes(String projectTypeCode, String serviceRegionCode) {
         codeValidationService.validateProjectTypeCode(projectTypeCode, "projectTypeCode");
         codeValidationService.validateRegionCode(serviceRegionCode, "serviceRegionCode");
-    }
-
-    private Proposal getAcceptedProposal(Long projectId) {
-        return proposalRepository.findAcceptedProposalByProjectId(projectId)
-                .orElseThrow(() -> new CustomException(ErrorCode.PROPOSAL_NOT_FOUND));
     }
 }

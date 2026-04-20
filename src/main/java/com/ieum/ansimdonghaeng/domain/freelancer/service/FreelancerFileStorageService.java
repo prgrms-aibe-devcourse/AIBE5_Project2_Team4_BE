@@ -101,6 +101,19 @@ public class FreelancerFileStorageService {
         }
     }
 
+    public Path resolveReadablePath(String storagePath) {
+        if (!StringUtils.hasText(storagePath)) {
+            throw new CustomException(ErrorCode.FILE_NOT_FOUND);
+        }
+
+        Path targetPath = Path.of(storagePath).toAbsolutePath().normalize();
+        if (!targetPath.startsWith(baseDirectory) || !Files.isRegularFile(targetPath)) {
+            throw new CustomException(ErrorCode.FILE_NOT_FOUND);
+        }
+
+        return targetPath;
+    }
+
     private String extractExtension(String originalFilename) {
         int lastDotIndex = originalFilename.lastIndexOf('.');
         if (lastDotIndex < 0 || lastDotIndex == originalFilename.length() - 1) {

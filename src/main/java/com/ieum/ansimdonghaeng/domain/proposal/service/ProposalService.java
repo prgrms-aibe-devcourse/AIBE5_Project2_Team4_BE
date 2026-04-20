@@ -2,18 +2,21 @@ package com.ieum.ansimdonghaeng.domain.proposal.service;
 
 import com.ieum.ansimdonghaeng.common.exception.CustomException;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
+import com.ieum.ansimdonghaeng.common.response.PageResponse;
 import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerProfile;
 import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
+import com.ieum.ansimdonghaeng.domain.notification.service.NotificationService;
 import com.ieum.ansimdonghaeng.domain.project.entity.Project;
 import com.ieum.ansimdonghaeng.domain.project.entity.ProjectStatus;
 import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
-import com.ieum.ansimdonghaeng.domain.notification.service.NotificationService;
 import com.ieum.ansimdonghaeng.domain.proposal.dto.request.ProposalCreateRequest;
+import com.ieum.ansimdonghaeng.domain.proposal.dto.response.ProjectProposalSummaryResponse;
 import com.ieum.ansimdonghaeng.domain.proposal.dto.response.ProposalCreateResponse;
 import com.ieum.ansimdonghaeng.domain.proposal.dto.response.ProposalDetailResponse;
 import com.ieum.ansimdonghaeng.domain.proposal.dto.response.ProposalListResponse;
 import com.ieum.ansimdonghaeng.domain.proposal.entity.Proposal;
 import com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus;
+import com.ieum.ansimdonghaeng.domain.proposal.repository.ProjectProposalSummaryView;
 import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalRepository;
 import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalSummaryView;
 import com.ieum.ansimdonghaeng.domain.user.entity.UserRole;
@@ -36,7 +39,6 @@ public class ProposalService {
     private final FreelancerProfileRepository freelancerProfileRepository;
     private final NotificationService notificationService;
 
-    // 사용자는 본인 프로젝트가 REQUESTED 상태일 때만 프리랜서에게 제안을 보낼 수 있다.
     @Transactional
     public ProposalCreateResponse createProposal(Long currentUserId, Long projectId, ProposalCreateRequest request) {
         Project project = getOwnedProject(projectId, currentUserId);
@@ -57,7 +59,20 @@ public class ProposalService {
         }
     }
 
-    // 프리랜서는 자신에게 도착한 제안만 상태 조건과 함께 페이지로 조회한다.
+    public PageResponse<ProjectProposalSummaryResponse> getProjectProposals(Long currentUserId,
+                                                                            Long projectId,
+                                                                            ProposalStatus status,
+                                                                            int page,
+                                                                            int size) {
+        getOwnedProject(projectId, currentUserId);
+        Page<ProjectProposalSummaryView> proposalPage = proposalRepository.findProjectOwnerProposals(
+                projectId,
+                status,
+                PageRequest.of(page, size)
+        );
+        return PageResponse.from(proposalPage.map(ProjectProposalSummaryResponse::from));
+    }
+
     public ProposalListResponse getMyProposals(Long currentUserId, ProposalStatus status, int page, int size) {
         FreelancerProfile currentFreelancerProfile = getCurrentFreelancerProfile(currentUserId);
         Page<ProposalSummaryView> proposalPage = proposalRepository.findFreelancerProposals(
@@ -68,7 +83,6 @@ public class ProposalService {
         return ProposalListResponse.from(proposalPage);
     }
 
-    // 프리랜서는 자신에게 전달된 제안 상세만 확인할 수 있다.
     public ProposalDetailResponse getMyProposal(Long currentUserId, Long proposalId) {
         FreelancerProfile currentFreelancerProfile = getCurrentFreelancerProfile(currentUserId);
         Proposal proposal = proposalRepository.findDetailById(proposalId)
@@ -78,7 +92,6 @@ public class ProposalService {
         return ProposalDetailResponse.from(proposal);
     }
 
-    // 제안을 수락하면 프로젝트도 ACCEPTED 상태로 함께 전이하고 나머지 대기 제안은 거절 처리한다.
     @Transactional
     public ProposalDetailResponse acceptProposal(Long currentUserId, Long proposalId) {
         FreelancerProfile currentFreelancerProfile = getCurrentFreelancerProfile(currentUserId);
