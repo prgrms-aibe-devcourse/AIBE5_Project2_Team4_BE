@@ -78,4 +78,18 @@ public class FreelancerProposalController {
         );
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @Operation(summary = "?꾨━?쒖꽌 ?쒖븞 嫄곗젅")
+    @PatchMapping("/{proposalId}/reject")
+    @PreAuthorize("hasRole('FREELANCER')")
+    public ResponseEntity<ApiResponse<ProposalDetailResponse>> rejectProposal(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long proposalId
+    ) {
+        ProposalDetailResponse response = proposalService.rejectProposal(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                proposalId
+        );
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }

@@ -7,7 +7,10 @@ import com.ieum.ansimdonghaeng.domain.project.entity.ProjectStatus;
 import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
 import com.ieum.ansimdonghaeng.domain.proposal.entity.Proposal;
 import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalRepository;
+import com.ieum.ansimdonghaeng.domain.report.repository.ReportRepository;
 import com.ieum.ansimdonghaeng.domain.review.dto.request.ReviewCreateRequest;
+import com.ieum.ansimdonghaeng.domain.review.dto.response.MyReviewListResponse;
+import com.ieum.ansimdonghaeng.domain.review.dto.response.MyReviewResponse;
 import com.ieum.ansimdonghaeng.domain.review.dto.request.ReviewUpdateRequest;
 import com.ieum.ansimdonghaeng.domain.review.dto.response.ReviewAggregateResponse;
 import com.ieum.ansimdonghaeng.domain.review.dto.response.ReviewDeleteResponse;
@@ -18,8 +21,13 @@ import com.ieum.ansimdonghaeng.domain.review.entity.Review;
 import com.ieum.ansimdonghaeng.domain.review.repository.ReviewRepository;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +39,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ProjectRepository projectRepository;
     private final ProposalRepository proposalRepository;
+    private final ReportRepository reportRepository;
     private final UserRepository userRepository;
 
     public ReviewResponse createReview(Long currentUserId, Long projectId, ReviewCreateRequest request) {
@@ -66,6 +75,39 @@ public class ReviewService {
                         reviewRepository.countVisibleByFreelancerProfileId(freelancerProfileId)
                 )
         );
+    }
+
+    @Transactional(readOnly = true)
+    public MyReviewListResponse getMyReviews(Long currentUserId, Pageable pageable) {
+        getActiveUser(currentUserId);
+        var page = reviewRepository.findAllByReviewerUser_IdOrderByCreatedAtDescIdDesc(currentUserId, pageable);
+        if (page.isEmpty()) {
+            return MyReviewListResponse.from(new PageImpl<>(Collections.emptyList(), pageable, 0));
+        }
+
+        var projectIds = page.getContent().stream()
+                .map(review -> review.getProject().getId())
+                .distinct()
+                .toList();
+        Map<Long, Proposal> acceptedProposalByProjectId = proposalRepository.findAcceptedProposalsByProjectIds(projectIds)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        proposal -> proposal.getProject().getId(),
+                        Function.identity()
+                ));
+        Set<Long> reportedReviewIds = reportRepository.findReportedReviewIds(
+                page.getContent().stream().map(Review::getId).toList()
+        );
+
+        var content = page.getContent().stream()
+                .map(review -> MyReviewResponse.from(
+                        review,
+                        acceptedProposalByProjectId.get(review.getProject().getId()),
+                        reportedReviewIds.contains(review.getId())
+                ))
+                .toList();
+
+        return MyReviewListResponse.from(new PageImpl<>(content, pageable, page.getTotalElements()));
     }
 
     @Transactional(readOnly = true)

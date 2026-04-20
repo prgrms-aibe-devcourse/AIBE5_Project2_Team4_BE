@@ -3,6 +3,7 @@ package com.ieum.ansimdonghaeng.support;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
+import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerFileRepository;
 import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerProfile;
 import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
 import com.ieum.ansimdonghaeng.domain.notice.entity.Notice;
@@ -47,6 +48,9 @@ public abstract class AdminIntegrationTestSupport {
     protected FreelancerProfileRepository freelancerProfileRepository;
 
     @Autowired
+    protected FreelancerFileRepository freelancerFileRepository;
+
+    @Autowired
     protected ProjectRepository projectRepository;
 
     @Autowired
@@ -76,6 +80,7 @@ public abstract class AdminIntegrationTestSupport {
     @AfterEach
     void cleanUpAdminData() {
         notificationRepository.deleteAll();
+        freelancerFileRepository.deleteAll();
         verificationFileRepository.deleteAll();
         reportRepository.deleteAll();
         reviewRepository.deleteAll();
