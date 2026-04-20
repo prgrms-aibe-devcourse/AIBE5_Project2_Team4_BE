@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.hamcrest.Matchers;
 import com.ieum.ansimdonghaeng.domain.notification.entity.Notification;
 import com.ieum.ansimdonghaeng.domain.notification.entity.NotificationType;
 import com.ieum.ansimdonghaeng.domain.project.entity.Project;
@@ -76,5 +77,56 @@ class UserMyPageIntegrationTest extends AdminIntegrationTestSupport {
                 .andExpect(jsonPath("$.data.verificationSummary.status").value("PENDING"))
                 .andExpect(jsonPath("$.data.proposalSummary.receivedProposalCount").value(2))
                 .andExpect(jsonPath("$.data.proposalSummary.pendingReceivedProposalCount").value(1));
+    }
+
+    @Test
+    void getMyPageHidesFreelancerBlocksWhenRoleIsNotFreelancer() throws Exception {
+        User user = saveUser("user@test.com", "user", UserRole.USER);
+        User otherOwner = saveUser("owner@test.com", "owner", UserRole.USER);
+        var freelancerProfile = saveFreelancerProfile(user, false, true);
+
+        saveProject(user, ProjectStatus.REQUESTED);
+        notificationRepository.save(Notification.create(
+                user,
+                NotificationType.NOTICE,
+                "notice",
+                "content",
+                null,
+                null,
+                null,
+                null,
+                null
+        ));
+        saveVerification(freelancerProfile, VerificationType.LICENSE, VerificationStatus.PENDING, null, null);
+        proposalRepository.saveAndFlush(Proposal.create(
+                saveProject(otherOwner, ProjectStatus.REQUESTED),
+                freelancerProfile,
+                "pending"
+        ));
+
+        mockMvc.perform(get("/api/v1/users/me/mypage").with(userPrincipal(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.user.roleCode").value("ROLE_USER"))
+                .andExpect(jsonPath("$.data.projectStats.totalProjects").value(1))
+                .andExpect(jsonPath("$.data.notificationSummary.unreadNotificationCount").value(1))
+                .andExpect(jsonPath("$.data.freelancerProfile").value(Matchers.nullValue()))
+                .andExpect(jsonPath("$.data.verificationSummary").value(Matchers.nullValue()))
+                .andExpect(jsonPath("$.data.proposalSummary").value(Matchers.nullValue()));
+    }
+
+    @Test
+    void getMyPageKeepsGeneralUserSummariesWithoutFreelancerBlocks() throws Exception {
+        User user = saveUser("general@test.com", "general", UserRole.USER);
+        saveProject(user, ProjectStatus.REQUESTED);
+
+        mockMvc.perform(get("/api/v1/users/me/mypage").with(userPrincipal(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.user.userId").value(user.getId()))
+                .andExpect(jsonPath("$.data.projectStats.totalProjects").value(1))
+                .andExpect(jsonPath("$.data.reviewStats.writtenReviewCount").value(0))
+                .andExpect(jsonPath("$.data.notificationSummary.unreadNotificationCount").value(0))
+                .andExpect(jsonPath("$.data.freelancerProfile").value(Matchers.nullValue()))
+                .andExpect(jsonPath("$.data.verificationSummary").value(Matchers.nullValue()))
+                .andExpect(jsonPath("$.data.proposalSummary").value(Matchers.nullValue()));
     }
 }

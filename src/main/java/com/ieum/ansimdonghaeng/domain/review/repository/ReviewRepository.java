@@ -35,8 +35,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
             join review.project project
             join com.ieum.ansimdonghaeng.domain.proposal.entity.Proposal proposal
               on proposal.project = project
+            join proposal.freelancerProfile freelancerProfile
+            join freelancerProfile.user user
             where proposal.freelancerProfile.id = :freelancerProfileId
               and proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
+              and freelancerProfile.publicYn = true
+              and user.activeYn = true
+              and user.roleCode = 'ROLE_FREELANCER'
               and review.blindedYn = 'N'
             order by review.createdAt desc, review.id desc
             """)

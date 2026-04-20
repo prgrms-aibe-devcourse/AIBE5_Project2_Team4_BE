@@ -85,4 +85,62 @@ class ReviewControllerIntegrationTest extends AdminIntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].code").value("KIND"));
     }
+
+    @Test
+    void publicFreelancerReviewsReturnOnlyVisibleAcceptedReviews() throws Exception {
+        User owner = saveUser("owner@test.com", "owner", UserRole.USER);
+        User freelancerUser = saveUser("freelancer@test.com", "freelancer", UserRole.FREELANCER);
+        var freelancerProfile = saveFreelancerProfile(freelancerUser, true, true);
+
+        var visibleProject = saveProject(owner, ProjectStatus.COMPLETED);
+        saveAcceptedProposal(visibleProject, freelancerProfile);
+        var visibleReview = saveReview(visibleProject, 5, false);
+
+        var blindedProject = saveProject(owner, ProjectStatus.COMPLETED);
+        saveAcceptedProposal(blindedProject, freelancerProfile);
+        saveReview(blindedProject, 4, true);
+
+        var notAcceptedProject = saveProject(owner, ProjectStatus.COMPLETED);
+        proposalRepository.saveAndFlush(com.ieum.ansimdonghaeng.domain.proposal.entity.Proposal.create(
+                notAcceptedProject,
+                freelancerProfile,
+                "pending"
+        ));
+        saveReview(notAcceptedProject, 3, false);
+
+        mockMvc.perform(get("/api/v1/freelancers/{freelancerProfileId}/reviews", freelancerProfile.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].reviewId").value(visibleReview.getId()));
+    }
+
+    @Test
+    void privateFreelancerReturnsNotFoundForPublicReviewEndpoint() throws Exception {
+        User freelancerUser = saveUser("freelancer@test.com", "freelancer", UserRole.FREELANCER);
+        var freelancerProfile = saveFreelancerProfile(freelancerUser, true, false);
+
+        mockMvc.perform(get("/api/v1/freelancers/{freelancerProfileId}/reviews", freelancerProfile.getId()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("FREELANCER_404_1"));
+    }
+
+    @Test
+    void inactiveFreelancerReturnsNotFoundForPublicReviewEndpoint() throws Exception {
+        User freelancerUser = saveUser("freelancer@test.com", "freelancer", UserRole.FREELANCER, false);
+        var freelancerProfile = saveFreelancerProfile(freelancerUser, true, true);
+
+        mockMvc.perform(get("/api/v1/freelancers/{freelancerProfileId}/reviews", freelancerProfile.getId()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("FREELANCER_404_1"));
+    }
+
+    @Test
+    void roleMismatchFreelancerProfileReturnsNotFoundForPublicReviewEndpoint() throws Exception {
+        User user = saveUser("user@test.com", "user", UserRole.USER);
+        var freelancerProfile = saveFreelancerProfile(user, true, true);
+
+        mockMvc.perform(get("/api/v1/freelancers/{freelancerProfileId}/reviews", freelancerProfile.getId()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("FREELANCER_404_1"));
+    }
 }

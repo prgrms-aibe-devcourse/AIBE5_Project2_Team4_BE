@@ -15,6 +15,7 @@ import com.ieum.ansimdonghaeng.domain.user.dto.response.PublicUserProfileRespons
 import com.ieum.ansimdonghaeng.domain.user.dto.response.UserMyPageResponse;
 import com.ieum.ansimdonghaeng.domain.user.dto.response.UserProfileResponse;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
+import com.ieum.ansimdonghaeng.domain.user.entity.UserRole;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
 import com.ieum.ansimdonghaeng.domain.review.repository.ReviewRepository;
 import com.ieum.ansimdonghaeng.domain.verification.entity.Verification;
@@ -67,7 +68,7 @@ public class UserService {
         UserMyPageResponse.VerificationSummary verificationSummary = null;
         UserMyPageResponse.ProposalSummary proposalSummary = null;
 
-        if (profile != null) {
+        if (profile != null && UserRole.FREELANCER.getCode().equals(user.getRoleCode())) {
             freelancerProfileSummary = new UserMyPageResponse.FreelancerProfileSummary(
                     profile.getId(),
                     profile.getVerifiedYn(),

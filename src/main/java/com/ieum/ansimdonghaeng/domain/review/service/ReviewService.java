@@ -3,6 +3,7 @@ package com.ieum.ansimdonghaeng.domain.review.service;
 import com.ieum.ansimdonghaeng.common.exception.CustomException;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.common.response.PageResponse;
+import com.ieum.ansimdonghaeng.domain.freelancer.service.FreelancerService;
 import com.ieum.ansimdonghaeng.domain.project.entity.Project;
 import com.ieum.ansimdonghaeng.domain.project.entity.ProjectStatus;
 import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,7 @@ public class ReviewService {
     private final ProposalRepository proposalRepository;
     private final ReportRepository reportRepository;
     private final ReviewTagCodeRepository reviewTagCodeRepository;
+    private final FreelancerService freelancerService;
 
     @Transactional
     public ReviewDetailResponse createReview(Long currentUserId, Long projectId, ReviewCreateRequest request) {
@@ -57,9 +60,20 @@ public class ReviewService {
         }
 
         Proposal acceptedProposal = getAcceptedProposal(projectId);
-        Review savedReview = reviewRepository.saveAndFlush(
-                Review.create(project, currentUserId, request.rating(), request.content(), normalizeTagCodes(request.tagCodes()))
-        );
+        Review savedReview;
+        try {
+            savedReview = reviewRepository.saveAndFlush(
+                    Review.create(
+                            project,
+                            currentUserId,
+                            request.rating(),
+                            request.content(),
+                            normalizeTagCodes(request.tagCodes())
+                    )
+            );
+        } catch (DataIntegrityViolationException exception) {
+            throw new CustomException(ErrorCode.REVIEW_ALREADY_EXISTS);
+        }
         Review detailReview = reviewRepository.findDetailById(savedReview.getId()).orElse(savedReview);
         return ReviewDetailResponse.from(detailReview, acceptedProposal, false);
     }
@@ -116,6 +130,7 @@ public class ReviewService {
     }
 
     public PageResponse<ReviewSummaryResponse> getPublicFreelancerReviews(Long freelancerProfileId, Pageable pageable) {
+        freelancerService.getPublicFreelancerProfile(freelancerProfileId);
         Page<Review> reviewPage = reviewRepository.findPublicReviewsByFreelancerProfileId(freelancerProfileId, pageable);
         return PageResponse.from(reviewPage.map(ReviewSummaryResponse::from));
     }

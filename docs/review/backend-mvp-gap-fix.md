@@ -65,6 +65,7 @@
 - `VERIFICATION` 단일 aggregate 기준으로 통합
 - 중복 매핑이던 `VerificationRequest` / `VerificationRequestRepository` 제거
 - 신청, 목록, 상세, 파일 업로드, 관리자 승인/반려를 `Verification` 기준으로 정리
+- `APPROVED` / `REJECTED` 상태의 verification 은 파일 upload/delete mutation 을 허용하지 않음
 
 ### 7. 파일 다운로드 / 열람 방식 정리
 
@@ -110,6 +111,7 @@
 - 프론트는 현재 localStorage mock 구조를 사용하고 있어 실제 API 응답 shape 와 연결 어댑터가 필요
 - proposal reject mock은 body 없는 액션이라 백엔드도 body 없이 통일
 - 프론트 review mock은 `tags: string[]` 를 사용하므로, 백엔드는 `tagCodes[]` 로 고정하고 `/api/v1/reviews/tag-codes` 를 제공
+- 공개 freelancer review 는 `publicYn=true`, `activeYn=true`, `ROLE_FREELANCER`, `blindedYn=false`, accepted proposal 연결 조건에서만 노출되도록 정리
 - 프론트 프로젝트 권한 mock은 start/complete 를 배정된 프리랜서 또는 관리자에게 열고 있어, 백엔드 정책도 동일하게 정리
 - 프론트 파일 사용은 링크 기반이 자연스러워 `viewUrl` / `downloadUrl` 계약으로 정리
 

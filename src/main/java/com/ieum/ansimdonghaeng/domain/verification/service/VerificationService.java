@@ -70,7 +70,7 @@ public class VerificationService {
     public VerificationFileResponse uploadMyVerificationFile(Long currentUserId,
                                                              Long verificationId,
                                                              MultipartFile file) {
-        Verification verification = getOwnedVerification(currentUserId, verificationId);
+        Verification verification = getMutableOwnedVerification(currentUserId, verificationId);
         FreelancerProfile profile = verification.getFreelancerProfile();
         FreelancerFileStorageService.StoredFile storedFile = fileStorageService.storeVerification(
                 profile.getId(),
@@ -104,6 +104,7 @@ public class VerificationService {
         if (!file.isOwnedBy(currentUserId)) {
             throw new CustomException(ErrorCode.FILE_NOT_FOUND);
         }
+        validatePendingVerification(file.getVerification());
 
         verificationFileRepository.delete(file);
         fileStorageService.delete(file.getFileUrl());
@@ -118,5 +119,17 @@ public class VerificationService {
         }
 
         return verification;
+    }
+
+    private Verification getMutableOwnedVerification(Long currentUserId, Long verificationId) {
+        Verification verification = getOwnedVerification(currentUserId, verificationId);
+        validatePendingVerification(verification);
+        return verification;
+    }
+
+    private void validatePendingVerification(Verification verification) {
+        if (!verification.isPending()) {
+            throw new CustomException(ErrorCode.VERIFICATION_INVALID_STATUS);
+        }
     }
 }

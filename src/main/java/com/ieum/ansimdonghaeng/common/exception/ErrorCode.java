@@ -23,6 +23,8 @@ public enum ErrorCode {
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT_404_1", "Report was not found."),
     REPORT_DUPLICATE(HttpStatus.CONFLICT, "REPORT_409_2", "You have already reported this review."),
     VERIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "VERIFICATION_404_1", "Verification was not found."),
+    VERIFICATION_INVALID_STATUS(HttpStatus.BAD_REQUEST, "VERIFICATION_400_1",
+            "Verification status does not allow this action."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE_404_1", "Notice was not found."),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_404_1", "Notification was not found."),
     VERIFICATION_DUPLICATE(HttpStatus.CONFLICT, "VERIFICATION_409_1", "Pending verification request already exists."),
