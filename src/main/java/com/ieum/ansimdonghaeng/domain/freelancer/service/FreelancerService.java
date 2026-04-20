@@ -93,11 +93,14 @@ public class FreelancerService {
 
     // 비공개 프로필이나 비활성 프리랜서는 상세 조회에서 숨긴다.
     public PublicFreelancerDetailResponse getFreelancer(Long freelancerProfileId) {
+        return PublicFreelancerDetailResponse.from(getPublicFreelancerProfile(freelancerProfileId));
+    }
+
+    public FreelancerProfile getPublicFreelancerProfile(Long freelancerProfileId) {
         FreelancerProfile profile = freelancerProfileRepository.findDetailById(freelancerProfileId)
                 .orElseThrow(() -> new CustomException(ErrorCode.FREELANCER_NOT_FOUND));
-
         validatePublicFreelancer(profile);
-        return PublicFreelancerDetailResponse.from(profile);
+        return profile;
     }
 
     @Transactional

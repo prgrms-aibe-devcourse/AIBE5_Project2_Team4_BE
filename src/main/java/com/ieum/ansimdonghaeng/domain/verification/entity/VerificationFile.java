@@ -16,8 +16,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "VERIFICATION_FILE")
@@ -37,11 +35,6 @@ public class VerificationFile {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "VERIFICATION_ID", insertable = false, updatable = false)
     private Verification verification;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "VERIFICATION_ID", insertable = false, updatable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private VerificationRequest verificationRequest;
 
     @Column(name = "ORIGINAL_NAME", nullable = false, length = 510)
     private String originalFilename;
@@ -64,7 +57,6 @@ public class VerificationFile {
     @Builder(access = AccessLevel.PRIVATE)
     private VerificationFile(Long verificationId,
                              Verification verification,
-                             VerificationRequest verificationRequest,
                              String originalFilename,
                              String storedFilename,
                              String fileUrl,
@@ -73,7 +65,6 @@ public class VerificationFile {
                              LocalDateTime uploadedAt) {
         this.verificationId = verificationId;
         this.verification = verification;
-        this.verificationRequest = verificationRequest;
         this.originalFilename = originalFilename;
         this.storedFilename = storedFilename;
         this.fileUrl = fileUrl;
@@ -101,26 +92,9 @@ public class VerificationFile {
                 .build();
     }
 
-    public static VerificationFile create(VerificationRequest verificationRequest,
-                                          String originalFilename,
-                                          String storedFilename,
-                                          String fileUrl,
-                                          String contentType,
-                                          Long fileSize) {
-        return VerificationFile.builder()
-                .verificationId(verificationRequest.getId())
-                .verificationRequest(verificationRequest)
-                .originalFilename(originalFilename)
-                .storedFilename(storedFilename)
-                .fileUrl(fileUrl)
-                .contentType(contentType)
-                .fileSize(fileSize)
-                .uploadedAt(LocalDateTime.now())
-                .build();
-    }
-
     public boolean isOwnedBy(Long userId) {
-        return Objects.equals(verificationRequest.getFreelancerProfile().getUser().getId(), userId);
+        return verification != null
+                && Objects.equals(verification.getFreelancerProfile().getUser().getId(), userId);
     }
 
     public String getOriginalName() {

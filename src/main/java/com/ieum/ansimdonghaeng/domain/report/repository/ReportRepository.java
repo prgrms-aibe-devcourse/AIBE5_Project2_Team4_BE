@@ -20,10 +20,14 @@ public interface ReportRepository extends JpaRepository<Report, Long>, JpaSpecif
 
     long countByStatus(ReportStatus status);
 
+    long countByReporterUser_Id(Long reporterUserId);
+
     @Override
     Page<Report> findAll(Specification<Report> spec, Pageable pageable);
 
     boolean existsByReview_IdAndReporterUser_Id(Long reviewId, Long reporterUserId);
+
+    boolean existsByReview_Id(Long reviewId);
 
     @Query("""
             select distinct report.review.id
@@ -31,6 +35,14 @@ public interface ReportRepository extends JpaRepository<Report, Long>, JpaSpecif
             where report.review.id in :reviewIds
             """)
     Set<Long> findReportedReviewIds(@Param("reviewIds") List<Long> reviewIds);
+
+    @EntityGraph(attributePaths = {"review", "review.project", "handledByUser"})
+    Page<Report> findAllByReporterUser_IdOrderByCreatedAtDescIdDesc(Long reporterUserId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"review", "review.project", "handledByUser"})
+    Page<Report> findAllByReporterUser_IdAndStatusOrderByCreatedAtDescIdDesc(Long reporterUserId,
+                                                                              ReportStatus status,
+                                                                              Pageable pageable);
 
     @EntityGraph(attributePaths = {"review", "review.project", "review.project.ownerUser", "reporterUser"})
     List<Report> findTop5ByStatusOrderByCreatedAtDescIdDesc(ReportStatus status);

@@ -42,9 +42,10 @@ public record AdminFreelancerDetailResponse(
     public record PortfolioFileResponse(
             Long verificationFileId,
             String originalName,
-            String fileUrl,
             String contentType,
             Long fileSize,
+            String viewUrl,
+            String downloadUrl,
             LocalDateTime uploadedAt
     ) {
     }

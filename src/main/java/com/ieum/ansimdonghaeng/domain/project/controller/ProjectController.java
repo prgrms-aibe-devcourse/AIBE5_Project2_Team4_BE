@@ -39,7 +39,7 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
-    @Operation(summary = "프로젝트 생성")
+    @Operation(summary = "Create project")
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<ProjectCreateResponse>> createProject(
@@ -53,7 +53,7 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
-    @Operation(summary = "내 프로젝트 목록 조회")
+    @Operation(summary = "List my projects")
     @GetMapping("/me")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<ProjectListResponse>> getMyProjects(
@@ -71,7 +71,7 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @Operation(summary = "프로젝트 상세 조회")
+    @Operation(summary = "Get project detail")
     @GetMapping("/{projectId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<ProjectDetailResponse>> getProject(
@@ -85,7 +85,7 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @Operation(summary = "프로젝트 수정")
+    @Operation(summary = "Update project")
     @PatchMapping("/{projectId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<ProjectDetailResponse>> updateProject(
@@ -101,7 +101,7 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @Operation(summary = "프로젝트 취소")
+    @Operation(summary = "Cancel project")
     @PatchMapping("/{projectId}/cancel")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<ProjectCancelResponse>> cancelProject(
@@ -118,24 +118,33 @@ public class ProjectController {
     }
 
     @PatchMapping("/{projectId}/start")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('FREELANCER','ADMIN')")
     public ResponseEntity<ApiResponse<ProjectDetailResponse>> startProject(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long projectId
     ) {
-        return ResponseEntity.ok(ApiResponse.success(
-                projectService.startProject(AuthenticatedUserSupport.currentUserId(userDetails), projectId)
-        ));
+        return ResponseEntity.ok(ApiResponse.success(projectService.startProject(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                hasAuthority(userDetails, "ROLE_ADMIN"),
+                projectId
+        )));
     }
 
     @PatchMapping("/{projectId}/complete")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('FREELANCER','ADMIN')")
     public ResponseEntity<ApiResponse<ProjectDetailResponse>> completeProject(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long projectId
     ) {
-        return ResponseEntity.ok(ApiResponse.success(
-                projectService.completeProject(AuthenticatedUserSupport.currentUserId(userDetails), projectId)
-        ));
+        return ResponseEntity.ok(ApiResponse.success(projectService.completeProject(
+                AuthenticatedUserSupport.currentUserId(userDetails),
+                hasAuthority(userDetails, "ROLE_ADMIN"),
+                projectId
+        )));
+    }
+
+    private boolean hasAuthority(CustomUserDetails userDetails, String authority) {
+        return userDetails.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> authority.equals(grantedAuthority.getAuthority()));
     }
 }

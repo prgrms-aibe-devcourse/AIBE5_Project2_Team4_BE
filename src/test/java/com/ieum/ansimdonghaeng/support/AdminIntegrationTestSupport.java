@@ -174,8 +174,7 @@ public abstract class AdminIntegrationTestSupport {
     }
 
     protected Review saveReview(Project project, int rating, boolean blinded) {
-        User reviewer = userRepository.findById(project.getOwnerUserId()).orElseThrow();
-        Review review = Review.create(project, reviewer, rating, "review content");
+        Review review = Review.create(project, project.getOwnerUserId(), rating, "review content", java.util.List.of());
         review = reviewRepository.saveAndFlush(review);
         if (blinded) {
             review.blind();

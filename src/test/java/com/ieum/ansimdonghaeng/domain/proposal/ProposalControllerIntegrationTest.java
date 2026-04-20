@@ -16,6 +16,7 @@ import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
 import com.ieum.ansimdonghaeng.domain.proposal.entity.Proposal;
 import com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus;
 import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalRepository;
+import com.ieum.ansimdonghaeng.domain.notification.repository.NotificationRepository;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
 import java.math.BigDecimal;

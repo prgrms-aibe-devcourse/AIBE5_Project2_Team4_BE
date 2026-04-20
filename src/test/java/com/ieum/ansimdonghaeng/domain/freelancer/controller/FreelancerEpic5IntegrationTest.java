@@ -16,11 +16,12 @@ import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
 import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalRepository;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
+import com.ieum.ansimdonghaeng.domain.notification.repository.NotificationRepository;
 import com.ieum.ansimdonghaeng.domain.verification.dto.request.VerificationCreateRequest;
-import com.ieum.ansimdonghaeng.domain.verification.dto.request.VerificationReviewRequest;
 import com.ieum.ansimdonghaeng.domain.verification.entity.VerificationType;
 import com.ieum.ansimdonghaeng.domain.verification.repository.VerificationFileRepository;
-import com.ieum.ansimdonghaeng.domain.verification.repository.VerificationRequestRepository;
+import com.ieum.ansimdonghaeng.domain.verification.repository.VerificationRepository;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -57,7 +58,7 @@ class FreelancerEpic5IntegrationTest {
     private FreelancerFileRepository freelancerFileRepository;
 
     @Autowired
-    private VerificationRequestRepository verificationRequestRepository;
+    private VerificationRepository verificationRepository;
 
     @Autowired
     private VerificationFileRepository verificationFileRepository;
@@ -69,13 +70,17 @@ class FreelancerEpic5IntegrationTest {
     private ProjectRepository projectRepository;
 
     @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
+        notificationRepository.deleteAll();
         freelancerFileRepository.deleteAll();
         verificationFileRepository.deleteAll();
-        verificationRequestRepository.deleteAll();
+        verificationRepository.deleteAll();
         proposalRepository.deleteAll();
         projectRepository.deleteAll();
         freelancerProfileRepository.deleteAll();
@@ -116,9 +121,9 @@ class FreelancerEpic5IntegrationTest {
                 .andExpect(jsonPath("$.data.status").value("PENDING"))
                 .andReturn();
 
-        Long verificationRequestId = objectMapper.readTree(verificationResult.getResponse().getContentAsString())
+        Long verificationId = objectMapper.readTree(verificationResult.getResponse().getContentAsString())
                 .path("data")
-                .path("verificationRequestId")
+                .path("verificationId")
                 .asLong();
 
         mockMvc.perform(post("/api/v1/freelancers/me/verifications")
@@ -142,7 +147,9 @@ class FreelancerEpic5IntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.originalFilename").value("portfolio.txt"))
-                .andExpect(jsonPath("$.data.displayOrder").value(1));
+                .andExpect(jsonPath("$.data.displayOrder").value(1))
+                .andExpect(jsonPath("$.data.viewUrl").exists())
+                .andExpect(jsonPath("$.data.downloadUrl").exists());
 
         MockMultipartFile verificationFile = new MockMultipartFile(
                 "file",
@@ -152,11 +159,12 @@ class FreelancerEpic5IntegrationTest {
         );
 
         MvcResult verificationFileResult = mockMvc.perform(
-                        multipart("/api/v1/freelancers/me/verifications/{verificationRequestId}/files", verificationRequestId)
+                        multipart("/api/v1/freelancers/me/verifications/{verificationId}/files", verificationId)
                                 .file(verificationFile)
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.originalFilename").value("career-proof.pdf"))
+                .andExpect(jsonPath("$.data.viewUrl").exists())
                 .andReturn();
 
         Long verificationFileId = objectMapper.readTree(verificationFileResult.getResponse().getContentAsString())
@@ -164,7 +172,7 @@ class FreelancerEpic5IntegrationTest {
                 .path("verificationFileId")
                 .asLong();
 
-        mockMvc.perform(get("/api/v1/freelancers/me/verifications/{verificationRequestId}/files", verificationRequestId)
+        mockMvc.perform(get("/api/v1/freelancers/me/verifications/{verificationId}/files", verificationId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].verificationFileId").value(verificationFileId));
@@ -181,10 +189,10 @@ class FreelancerEpic5IntegrationTest {
                 .andExpect(jsonPath("$.data.totalElements").value(1))
                 .andExpect(jsonPath("$.data.content[0].status").value("PENDING"));
 
-        mockMvc.perform(patch("/api/v1/admin/verifications/{verificationRequestId}/approve", verificationRequestId)
+        mockMvc.perform(patch("/api/v1/admin/verifications/{verificationId}/approve", verificationId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new VerificationReviewRequest("approved"))))
+                        .content(objectMapper.writeValueAsString(Map.of("comment", "approved"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("APPROVED"));
 

@@ -51,40 +51,40 @@ public class VerificationController {
         ));
     }
 
-    @GetMapping("/{verificationRequestId}")
+    @GetMapping("/{verificationId}")
     public ResponseEntity<ApiResponse<VerificationResponse>> getMyVerification(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long verificationRequestId
+            @PathVariable Long verificationId
     ) {
         VerificationResponse response = verificationService.getMyVerification(
                 AuthenticatedUserSupport.currentUserId(userDetails),
-                verificationRequestId
+                verificationId
         );
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PostMapping("/{verificationRequestId}/files")
+    @PostMapping("/{verificationId}/files")
     public ResponseEntity<ApiResponse<VerificationFileResponse>> uploadMyVerificationFile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long verificationRequestId,
+            @PathVariable Long verificationId,
             @RequestPart MultipartFile file
     ) {
         VerificationFileResponse response = verificationService.uploadMyVerificationFile(
                 AuthenticatedUserSupport.currentUserId(userDetails),
-                verificationRequestId,
+                verificationId,
                 file
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
-    @GetMapping("/{verificationRequestId}/files")
+    @GetMapping("/{verificationId}/files")
     public ResponseEntity<ApiResponse<List<VerificationFileResponse>>> getMyVerificationFiles(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long verificationRequestId
+            @PathVariable Long verificationId
     ) {
         return ResponseEntity.ok(ApiResponse.success(verificationService.getMyVerificationFiles(
                 AuthenticatedUserSupport.currentUserId(userDetails),
-                verificationRequestId
+                verificationId
         )));
     }
 

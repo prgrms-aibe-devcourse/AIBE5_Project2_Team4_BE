@@ -7,4 +7,6 @@ import org.springframework.data.domain.Pageable;
 public interface ProposalQueryRepository {
 
     Page<ProposalSummaryView> findFreelancerProposals(Long freelancerProfileId, ProposalStatus status, Pageable pageable);
+
+    Page<ProjectProposalSummaryView> findProjectOwnerProposals(Long projectId, ProposalStatus status, Pageable pageable);
 }

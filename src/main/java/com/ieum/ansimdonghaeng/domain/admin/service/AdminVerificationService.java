@@ -3,6 +3,7 @@ package com.ieum.ansimdonghaeng.domain.admin.service;
 import com.ieum.ansimdonghaeng.common.exception.CustomException;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.common.response.PageResponse;
+import com.ieum.ansimdonghaeng.domain.file.support.FileKeySupport;
 import com.ieum.ansimdonghaeng.domain.admin.dto.request.AdminVerificationApproveRequest;
 import com.ieum.ansimdonghaeng.domain.admin.dto.request.AdminVerificationRejectRequest;
 import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminVerificationDetailResponse;
@@ -10,6 +11,9 @@ import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminVerificationListIt
 import com.ieum.ansimdonghaeng.domain.admin.support.AdminPageQuerySupport;
 import com.ieum.ansimdonghaeng.domain.admin.support.AdminResponseMapper;
 import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerProfile;
+import com.ieum.ansimdonghaeng.domain.notification.entity.Notification;
+import com.ieum.ansimdonghaeng.domain.notification.entity.NotificationType;
+import com.ieum.ansimdonghaeng.domain.notification.repository.NotificationRepository;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
 import com.ieum.ansimdonghaeng.domain.verification.entity.Verification;
@@ -42,6 +46,7 @@ public class AdminVerificationService {
     private final VerificationRepository verificationRepository;
     private final VerificationFileRepository verificationFileRepository;
     private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
     private final EntityManager entityManager;
 
     public PageResponse<AdminVerificationListItemResponse> getVerifications(VerificationStatus status,
@@ -165,6 +170,17 @@ public class AdminVerificationService {
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "Admin user was not found."));
         verification.approve(adminUser, java.time.LocalDateTime.now());
         verification.getFreelancerProfile().updateVerifiedYn(true);
+        notificationRepository.save(Notification.create(
+                verification.getFreelancerProfile().getUser(),
+                NotificationType.VERIFICATION_APPROVED,
+                "검증 요청이 승인되었습니다.",
+                verification.getVerificationType().name(),
+                null,
+                null,
+                null,
+                null,
+                verification.getId()
+        ));
         return toDetailResponse(verification);
     }
 
@@ -188,6 +204,17 @@ public class AdminVerificationService {
                 VerificationStatus.APPROVED
         );
         profile.updateVerifiedYn(hasApprovedVerification);
+        notificationRepository.save(Notification.create(
+                verification.getFreelancerProfile().getUser(),
+                NotificationType.VERIFICATION_REJECTED,
+                "검증 요청이 반려되었습니다.",
+                request.reviewComment(),
+                null,
+                null,
+                null,
+                null,
+                verification.getId()
+        ));
         return toDetailResponse(verification);
     }
 
@@ -214,13 +241,15 @@ public class AdminVerificationService {
     }
 
     private AdminVerificationDetailResponse.FileSummaryResponse toFileSummaryResponse(VerificationFile file) {
+        String fileKey = FileKeySupport.verificationKey(file.getId());
         return new AdminVerificationDetailResponse.FileSummaryResponse(
                 file.getId(),
                 file.getOriginalName(),
                 file.getStoredName(),
-                file.getFileUrl(),
                 file.getContentType(),
                 file.getFileSize(),
+                FileKeySupport.viewUrl(fileKey),
+                FileKeySupport.downloadUrl(fileKey),
                 file.getUploadedAt()
         );
     }

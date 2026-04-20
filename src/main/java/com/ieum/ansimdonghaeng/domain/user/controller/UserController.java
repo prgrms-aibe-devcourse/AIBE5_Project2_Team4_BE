@@ -3,6 +3,7 @@ package com.ieum.ansimdonghaeng.domain.user.controller;
 import com.ieum.ansimdonghaeng.common.response.ApiResponse;
 import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
 import com.ieum.ansimdonghaeng.domain.user.dto.request.UserProfileUpdateRequest;
+import com.ieum.ansimdonghaeng.domain.user.dto.response.UserMyPageResponse;
 import com.ieum.ansimdonghaeng.domain.user.dto.response.PublicUserProfileResponse;
 import com.ieum.ansimdonghaeng.domain.user.dto.response.UserProfileResponse;
 import com.ieum.ansimdonghaeng.domain.user.service.UserService;
@@ -29,6 +30,13 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         return ResponseEntity.ok(ApiResponse.success(userService.getMyProfile(userDetails.getUserId())));
+    }
+
+    @GetMapping("/me/mypage")
+    public ResponseEntity<ApiResponse<UserMyPageResponse>> getMyPage(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(userService.getMyPage(userDetails.getUserId())));
     }
 
     @PatchMapping("/me")
