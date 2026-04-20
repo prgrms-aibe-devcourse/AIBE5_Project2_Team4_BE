@@ -111,6 +111,21 @@ public class ProposalService {
         return ProposalDetailResponse.from(proposal);
     }
 
+    @Transactional
+    public ProposalDetailResponse rejectProposal(Long currentUserId, Long proposalId) {
+        FreelancerProfile currentFreelancerProfile = getCurrentFreelancerProfile(currentUserId);
+        Proposal proposal = proposalRepository.findDetailByIdForUpdate(proposalId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROPOSAL_NOT_FOUND));
+
+        validateProposalOwnership(proposal, currentFreelancerProfile.getId());
+        if (!proposal.isPendingStatus()) {
+            throw new CustomException(ErrorCode.PROPOSAL_INVALID_STATUS);
+        }
+
+        proposal.reject(LocalDateTime.now());
+        return ProposalDetailResponse.from(proposal);
+    }
+
     private Project getOwnedProject(Long projectId, Long currentUserId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND));

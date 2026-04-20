@@ -13,6 +13,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface VerificationRequestRepository extends JpaRepository<VerificationRequest, Long> {
 
+    long countByFreelancerProfile_User_Id(Long userId);
+
+    long countByFreelancerProfile_User_IdAndStatus(Long userId, VerificationStatus status);
+
     @Query("""
             select request
             from VerificationRequest request

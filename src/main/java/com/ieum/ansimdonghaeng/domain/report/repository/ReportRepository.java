@@ -5,6 +5,7 @@ import com.ieum.ansimdonghaeng.domain.report.entity.ReportStatus;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,6 +24,13 @@ public interface ReportRepository extends JpaRepository<Report, Long>, JpaSpecif
     Page<Report> findAll(Specification<Report> spec, Pageable pageable);
 
     boolean existsByReview_IdAndReporterUser_Id(Long reviewId, Long reporterUserId);
+
+    @Query("""
+            select distinct report.review.id
+            from Report report
+            where report.review.id in :reviewIds
+            """)
+    Set<Long> findReportedReviewIds(@Param("reviewIds") List<Long> reviewIds);
 
     @EntityGraph(attributePaths = {"review", "review.project", "review.project.ownerUser", "reporterUser"})
     List<Report> findTop5ByStatusOrderByCreatedAtDescIdDesc(ReportStatus status);

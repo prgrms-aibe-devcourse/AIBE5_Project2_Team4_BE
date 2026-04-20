@@ -14,6 +14,10 @@ public interface ProposalRepository extends JpaRepository<Proposal, Long>, Propo
 
     boolean existsByProject_IdAndFreelancerProfile_Id(Long projectId, Long freelancerProfileId);
 
+    long countByFreelancerProfile_Id(Long freelancerProfileId);
+
+    long countByFreelancerProfile_IdAndStatus(Long freelancerProfileId, ProposalStatus status);
+
     List<Proposal> findAllByProject_IdAndStatusAndIdNot(Long projectId, ProposalStatus status, Long proposalId);
 
     @Query("""

@@ -15,6 +15,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
 
     long countByBlindedYn(String blindedYn);
 
+    long countByReviewerUser_Id(Long reviewerUserId);
+
     @Override
     Page<Review> findAll(Specification<Review> spec, Pageable pageable);
 
@@ -25,6 +27,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
 
     @EntityGraph(attributePaths = {"project", "reviewerUser"})
     Optional<Review> findById(Long reviewId);
+
+    @EntityGraph(attributePaths = {"project", "reviewerUser"})
+    Page<Review> findAllByReviewerUser_IdOrderByCreatedAtDescIdDesc(Long reviewerUserId, Pageable pageable);
 
     @Query(value = """
             select review

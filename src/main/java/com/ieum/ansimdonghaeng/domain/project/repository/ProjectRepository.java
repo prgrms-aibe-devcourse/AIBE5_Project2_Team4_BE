@@ -19,6 +19,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
 
     long countByStatus(ProjectStatus status);
 
+    long countByOwnerUserId(Long ownerUserId);
+
+    long countByOwnerUserIdAndStatus(Long ownerUserId, ProjectStatus status);
+
     @Override
     Page<Project> findAll(Specification<Project> spec, Pageable pageable);
 
