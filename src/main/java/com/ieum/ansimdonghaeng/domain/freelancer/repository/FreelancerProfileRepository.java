@@ -1,6 +1,7 @@
 package com.ieum.ansimdonghaeng.domain.freelancer.repository;
 
 import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerProfile;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,4 +28,17 @@ public interface FreelancerProfileRepository extends JpaRepository<FreelancerPro
     // 상세 응답에서 사용자 정보까지 함께 쓰기 위해 프로필과 사용자 정보를 같이 조회한다.
     @Query("select profile from FreelancerProfile profile join fetch profile.user where profile.id = :freelancerProfileId")
     Optional<FreelancerProfile> findDetailById(@Param("freelancerProfileId") Long freelancerProfileId);
+
+    @Query("""
+            select distinct profile
+            from FreelancerProfile profile
+            join fetch profile.user user
+            left join fetch profile.activityRegionCodes
+            left join fetch profile.availableTimeSlotCodes
+            left join fetch profile.projectTypeCodes
+            where profile.publicYn = true
+              and user.activeYn = true
+              and user.roleCode = 'ROLE_FREELANCER'
+            """)
+    List<FreelancerProfile> findPublicRecommendationCandidates();
 }

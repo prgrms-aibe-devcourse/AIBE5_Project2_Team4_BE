@@ -47,6 +47,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/reset-password"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/recommendations/freelancers/public").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/public-profile").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/freelancers", "/api/v1/freelancers/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/freelancers/*/reviews").permitAll()
