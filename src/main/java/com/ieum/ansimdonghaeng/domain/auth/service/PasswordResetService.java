@@ -4,10 +4,12 @@ import com.ieum.ansimdonghaeng.common.exception.CustomException;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.ForgotPasswordRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.ResetPasswordRequest;
-import com.ieum.ansimdonghaeng.domain.auth.mail.MailService;
+import com.ieum.ansimdonghaeng.domain.auth.mail.PasswordResetEmailSender;
+import com.ieum.ansimdonghaeng.domain.auth.repository.RefreshTokenRepository;
 import com.ieum.ansimdonghaeng.domain.auth.store.PasswordResetTokenStore;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
+import java.time.LocalDateTime;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,8 +24,9 @@ public class PasswordResetService {
 
     private final UserRepository userRepository;
     private final PasswordResetTokenStore tokenStore;
-    private final MailService mailService;
+    private final PasswordResetEmailSender emailSender;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Value("${app.password-reset.token-expiration-minutes:10}")
     private int tokenExpirationMinutes;
@@ -36,19 +39,21 @@ public class PasswordResetService {
         userRepository.findByEmailIgnoreCase(email).ifPresent(user -> {
             String token = tokenStore.createToken(email, tokenExpirationMinutes);
             String resetLink = resetUrlBase + "?token=" + token;
-            mailService.sendPasswordResetEmail(email, resetLink);
+            emailSender.sendPasswordResetEmail(email, resetLink);
         });
     }
 
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
-        String email = tokenStore.getEmailIfValid(request.resetToken())
+        String email = tokenStore.consumeValidToken(request.resetToken())
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_RESET_TOKEN));
 
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_RESET_TOKEN));
 
         user.updatePasswordHash(passwordEncoder.encode(request.newPassword()));
-        tokenStore.invalidate(request.resetToken());
+        LocalDateTime revokedAt = LocalDateTime.now();
+        refreshTokenRepository.findAllByUser_IdAndActiveYnTrue(user.getId())
+                .forEach(refreshToken -> refreshToken.revoke(revokedAt));
     }
 }

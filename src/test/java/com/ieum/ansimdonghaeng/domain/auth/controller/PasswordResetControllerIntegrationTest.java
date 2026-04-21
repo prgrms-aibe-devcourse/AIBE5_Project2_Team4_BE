@@ -2,8 +2,10 @@ package com.ieum.ansimdonghaeng.domain.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.AuthLoginRequest;
+import com.ieum.ansimdonghaeng.domain.auth.dto.request.AuthRefreshRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.ForgotPasswordRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.ResetPasswordRequest;
+import com.ieum.ansimdonghaeng.domain.auth.repository.RefreshTokenRepository;
 import com.ieum.ansimdonghaeng.domain.auth.store.PasswordResetTokenStore;
 import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
 import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
@@ -20,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -43,6 +46,9 @@ class PasswordResetControllerIntegrationTest {
     private PasswordResetTokenStore tokenStore;
 
     @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -56,6 +62,7 @@ class PasswordResetControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        refreshTokenRepository.deleteAll();
         proposalRepository.deleteAll();
         projectRepository.deleteAll();
         freelancerProfileRepository.deleteAll();
@@ -125,6 +132,54 @@ class PasswordResetControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(new AuthLoginRequest("reset@test.com", "newPass1!"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 후 기존 refresh token은 사용할 수 없다")
+    void resetPassword_validToken_revokesExistingRefreshToken() throws Exception {
+        userRepository.save(User.builder()
+                .email("reset-refresh@test.com")
+                .passwordHash(passwordEncoder.encode("oldPass1!"))
+                .name("reset-refresh-user")
+                .roleCode("ROLE_USER")
+                .activeYn(true)
+                .build());
+
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AuthLoginRequest("reset-refresh@test.com", "oldPass1!"))))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
+                .path("data")
+                .path("refreshToken")
+                .asText();
+        String resetToken = tokenStore.createToken("reset-refresh@test.com", 10);
+
+        mockMvc.perform(post("/api/v1/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ResetPasswordRequest(resetToken, "newPass1!"))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AuthRefreshRequest(refreshToken))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_401_REFRESH"));
+    }
+
+    @Test
+    @DisplayName("72자를 초과하는 새 비밀번호로 reset-password 요청 시 400 반환")
+    void resetPassword_tooLongPassword_returns400() throws Exception {
+        String token = tokenStore.createToken("too-long@test.com", 10);
+        String tooLongPassword = "a".repeat(73);
+
+        mockMvc.perform(post("/api/v1/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ResetPasswordRequest(token, tooLongPassword))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test

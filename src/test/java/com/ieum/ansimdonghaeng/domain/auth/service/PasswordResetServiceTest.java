@@ -4,12 +4,15 @@ import com.ieum.ansimdonghaeng.common.exception.CustomException;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.ForgotPasswordRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.ResetPasswordRequest;
+import com.ieum.ansimdonghaeng.domain.auth.entity.RefreshToken;
+import com.ieum.ansimdonghaeng.domain.auth.repository.RefreshTokenRepository;
 import com.ieum.ansimdonghaeng.domain.auth.store.PasswordResetTokenStore;
 import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
 import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
 import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalRepository;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +41,9 @@ class PasswordResetServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
     private ProposalRepository proposalRepository;
 
     @Autowired
@@ -48,6 +54,7 @@ class PasswordResetServiceTest {
 
     @BeforeEach
     void setUp() {
+        refreshTokenRepository.deleteAll();
         proposalRepository.deleteAll();
         projectRepository.deleteAll();
         freelancerProfileRepository.deleteAll();
@@ -94,6 +101,30 @@ class PasswordResetServiceTest {
         User updated = userRepository.findByEmailIgnoreCase(user.getEmail()).orElseThrow();
         assertThat(passwordEncoder.matches("newPass1!", updated.getPasswordHash())).isTrue();
         assertThat(passwordEncoder.matches("oldPass1!", updated.getPasswordHash())).isFalse();
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 시 활성 refreshToken을 revoke한다")
+    void resetPassword_validToken_revokesActiveRefreshTokens() {
+        User user = userRepository.save(User.builder()
+                .email("revoke-refresh@test.com")
+                .passwordHash(passwordEncoder.encode("oldPass1!"))
+                .name("revoke-user")
+                .roleCode("ROLE_USER")
+                .activeYn(true)
+                .build());
+        RefreshToken refreshToken = refreshTokenRepository.save(RefreshToken.issue(
+                user,
+                "stored-refresh-token",
+                LocalDateTime.now().plusDays(1)
+        ));
+        String resetToken = tokenStore.createToken(user.getEmail(), 10);
+
+        passwordResetService.resetPassword(new ResetPasswordRequest(resetToken, "newPass1!"));
+
+        RefreshToken revoked = refreshTokenRepository.findById(refreshToken.getId()).orElseThrow();
+        assertThat(revoked.getActiveYn()).isFalse();
+        assertThat(revoked.getRevokedAt()).isNotNull();
     }
 
     @Test
