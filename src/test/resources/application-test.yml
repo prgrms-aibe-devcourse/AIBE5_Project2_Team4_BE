@@ -1,0 +1,12 @@
+management:
+  health:
+    mail:
+      enabled: false
+
+app:
+  jwt:
+    secret: test-secret-key-for-ci-must-be-at-least-32-chars
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:ansimdonghaeng;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
