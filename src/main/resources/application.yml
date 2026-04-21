@@ -61,6 +61,10 @@ app:
     endpoint: ${WEBSOCKET_ENDPOINT:/ws}
   oauth:
     kakao:
+      token-uri: ${KAKAO_TOKEN_URI:https://kauth.kakao.com/oauth/token}
+      rest-api-key: ${KAKAO_REST_API_KEY:}
+      client-secret: ${KAKAO_CLIENT_SECRET:}
+      redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:5173/login/kakao/callback}
       user-info-uri: ${KAKAO_USER_INFO_URI:https://kapi.kakao.com/v2/user/me}
       connect-timeout-millis: ${KAKAO_CONNECT_TIMEOUT_MILLIS:3000}
       response-timeout-millis: ${KAKAO_RESPONSE_TIMEOUT_MILLIS:5000}

@@ -105,7 +105,8 @@ public class AuthService {
 
     @Transactional
     public AuthTokenResponse kakaoLogin(KakaoOAuthLoginRequest request) {
-        KakaoUserInfo kakaoUserInfo = kakaoOAuthClient.getUserInfo(request.accessToken());
+        String accessToken = resolveKakaoAccessToken(request);
+        KakaoUserInfo kakaoUserInfo = kakaoOAuthClient.getUserInfo(accessToken);
         String normalizedEmail = normalizeEmail(kakaoUserInfo.email());
 
         User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
@@ -113,6 +114,18 @@ public class AuthService {
 
         validateActiveUser(user);
         return issueTokensForUser(user);
+    }
+
+    private String resolveKakaoAccessToken(KakaoOAuthLoginRequest request) {
+        if (StringUtils.hasText(request.accessToken())) {
+            return request.accessToken();
+        }
+
+        if (StringUtils.hasText(request.authorizationCode())) {
+            return kakaoOAuthClient.getAccessToken(request.authorizationCode());
+        }
+
+        throw new CustomException(ErrorCode.INVALID_INPUT_VALUE, "accessToken or authorizationCode is required.");
     }
 
     @Transactional

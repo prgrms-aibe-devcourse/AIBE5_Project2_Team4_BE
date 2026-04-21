@@ -6,6 +6,13 @@ management:
 app:
   jwt:
     secret: test-secret-key-for-ci-must-be-at-least-32-chars
+  oauth:
+    kakao:
+      token-uri: https://kauth.kakao.com/oauth/token
+      rest-api-key: test-kakao-rest-api-key
+      client-secret: test-kakao-client-secret
+      redirect-uri: http://localhost:5173/login/kakao/callback
+      user-info-uri: https://kapi.kakao.com/v2/user/me
 
 spring:
   datasource:

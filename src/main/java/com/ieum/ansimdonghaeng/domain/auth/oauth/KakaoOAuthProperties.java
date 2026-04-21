@@ -14,6 +14,17 @@ import org.springframework.validation.annotation.Validated;
 public class KakaoOAuthProperties {
 
     @NotBlank
+    private String tokenUri;
+
+    @NotBlank
+    private String restApiKey;
+
+    private String clientSecret;
+
+    @NotBlank
+    private String redirectUri;
+
+    @NotBlank
     private String userInfoUri;
 
     @Positive

@@ -61,7 +61,7 @@ class KakaoOAuthServiceTest {
         when(kakaoOAuthClient.getUserInfo("kakao-access-token"))
                 .thenReturn(new KakaoUserInfo("12345", "kakao-user@test.com", "kakao-user"));
 
-        AuthTokenResponse response = authService.kakaoLogin(new KakaoOAuthLoginRequest("kakao-access-token"));
+        AuthTokenResponse response = authService.kakaoLogin(new KakaoOAuthLoginRequest("kakao-access-token", null));
 
         Optional<User> savedUser = userRepository.findByEmailIgnoreCase("kakao-user@test.com");
 
@@ -72,6 +72,21 @@ class KakaoOAuthServiceTest {
         assertThat(savedUser.get().getEmail()).isEqualTo("kakao-user@test.com");
         assertThat(savedUser.get().getName()).isEqualTo("kakao-user");
         assertThat(savedUser.get().getRoleCode()).isEqualTo("ROLE_USER");
+    }
+
+    @Test
+    @DisplayName("kakao login exchanges authorization code before user info lookup")
+    void kakaoLoginExchangesAuthorizationCode() {
+        when(kakaoOAuthClient.getAccessToken("kakao-authorization-code"))
+                .thenReturn("kakao-access-token");
+        when(kakaoOAuthClient.getUserInfo("kakao-access-token"))
+                .thenReturn(new KakaoUserInfo("12345", "kakao-code-user@test.com", "kakao-code-user"));
+
+        AuthTokenResponse response = authService.kakaoLogin(new KakaoOAuthLoginRequest(null, "kakao-authorization-code"));
+
+        assertThat(response.accessToken()).isNotBlank();
+        assertThat(response.refreshToken()).isNotBlank();
+        assertThat(response.user().email()).isEqualTo("kakao-code-user@test.com");
     }
 
     @Test
@@ -88,7 +103,7 @@ class KakaoOAuthServiceTest {
         when(kakaoOAuthClient.getUserInfo("existing-token"))
                 .thenReturn(new KakaoUserInfo("99999", "existing@test.com", "kakao-user"));
 
-        AuthTokenResponse response = authService.kakaoLogin(new KakaoOAuthLoginRequest("existing-token"));
+        AuthTokenResponse response = authService.kakaoLogin(new KakaoOAuthLoginRequest("existing-token", null));
 
         assertThat(response.user().userId()).isEqualTo(existingUser.getId());
         assertThat(userRepository.count()).isEqualTo(1);

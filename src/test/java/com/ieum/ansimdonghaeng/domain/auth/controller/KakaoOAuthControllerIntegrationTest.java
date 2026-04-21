@@ -66,7 +66,7 @@ class KakaoOAuthControllerIntegrationTest {
 
         mockMvc.perform(post("/api/v1/auth/oauth/kakao")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new KakaoOAuthLoginRequest("kakao-access-token"))))
+                        .content(objectMapper.writeValueAsString(new KakaoOAuthLoginRequest("kakao-access-token", null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
