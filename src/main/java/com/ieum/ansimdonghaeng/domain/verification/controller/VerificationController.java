@@ -94,6 +94,6 @@ public class VerificationController {
             @PathVariable Long fileId
     ) {
         verificationService.deleteMyVerificationFile(AuthenticatedUserSupport.currentUserId(userDetails), fileId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.empty());
+        return ResponseEntity.ok(ApiResponse.empty());
     }
 }

@@ -23,6 +23,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -53,6 +55,7 @@ public class Notification {
     @Column(name = "CONTENT", nullable = false, length = 2000)
     private String content;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "READ_YN", nullable = false, length = 1)
     private Boolean readYn;
 

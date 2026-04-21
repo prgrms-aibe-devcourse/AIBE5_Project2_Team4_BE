@@ -36,6 +36,7 @@ class SecurityExceptionResponseTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("COMMON_401"))
+                .andExpect(jsonPath("$.error.errorCode").value("COMMON_401"))
                 .andExpect(jsonPath("$.error.status").value(401))
                 .andExpect(jsonPath("$.error.path").value("/api/v1/projects/me"));
     }
@@ -48,6 +49,7 @@ class SecurityExceptionResponseTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("COMMON_403"))
+                .andExpect(jsonPath("$.error.errorCode").value("COMMON_403"))
                 .andExpect(jsonPath("$.error.status").value(403))
                 .andExpect(jsonPath("$.error.path").value("/api/v1/test/admin-only"));
     }
@@ -60,6 +62,7 @@ class SecurityExceptionResponseTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("AUTH_401_1"))
+                .andExpect(jsonPath("$.error.errorCode").value("AUTH_401_1"))
                 .andExpect(jsonPath("$.error.status").value(401))
                 .andExpect(jsonPath("$.error.path").value("/api/v1/projects/me"));
     }

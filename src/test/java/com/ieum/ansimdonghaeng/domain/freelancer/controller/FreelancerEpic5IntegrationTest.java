@@ -261,7 +261,7 @@ class FreelancerEpic5IntegrationTest {
                 true,
                 true,
                 Set.of("SEOUL_GANGNAM"),
-                Set.of("MORNING"),
+                Set.of("INVALID_SLOT"),
                 Set.of("HOSPITAL_COMPANION")
         );
 
@@ -271,7 +271,7 @@ class FreelancerEpic5IntegrationTest {
                         .content(objectMapper.writeValueAsString(profileRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("COMMON_400"))
-                .andExpect(jsonPath("$.error.message").value("availableTimeSlotCodes: unsupported code(s) [MORNING]"));
+                .andExpect(jsonPath("$.error.message").value("availableTimeSlotCodes: unsupported code(s) [INVALID_SLOT]"));
     }
 
     private String login(String email) throws Exception {

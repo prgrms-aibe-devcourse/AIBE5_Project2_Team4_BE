@@ -33,7 +33,8 @@ class ProposalRejectIntegrationTest extends AdminIntegrationTestSupport {
         var project = saveProject(owner, com.ieum.ansimdonghaeng.domain.project.entity.ProjectStatus.REQUESTED);
         Proposal proposal = proposalRepository.saveAndFlush(Proposal.create(project, freelancerProfile, "hello"));
 
-        mockMvc.perform(patch("/api/v1/proposals/{proposalId}/reject", proposal.getId()).with(freelancerPrincipal(freelancerUser)))
+        mockMvc.perform(patch("/api/v1/freelancers/me/proposals/{proposalId}/reject", proposal.getId())
+                        .with(freelancerPrincipal(freelancerUser)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.proposalStatus").value("REJECTED"))
                 .andExpect(jsonPath("$.data.respondedAt").exists());
@@ -53,8 +54,22 @@ class ProposalRejectIntegrationTest extends AdminIntegrationTestSupport {
         proposal.accept(LocalDateTime.of(2026, 4, 18, 10, 0));
         proposalRepository.saveAndFlush(proposal);
 
-        mockMvc.perform(patch("/api/v1/proposals/{proposalId}/reject", proposal.getId()).with(freelancerPrincipal(freelancerUser)))
+        mockMvc.perform(patch("/api/v1/freelancers/me/proposals/{proposalId}/reject", proposal.getId())
+                        .with(freelancerPrincipal(freelancerUser)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("PROPOSAL_400_1"));
+    }
+
+    @Test
+    void deprecatedRejectEndpointIsRemoved() throws Exception {
+        User owner = saveUser("owner@test.com", "owner", UserRole.USER);
+        User freelancerUser = saveUser("freelancer@test.com", "freelancer", UserRole.FREELANCER);
+        var freelancerProfile = saveFreelancerProfile(freelancerUser, true, true);
+        var project = saveProject(owner, com.ieum.ansimdonghaeng.domain.project.entity.ProjectStatus.REQUESTED);
+        Proposal proposal = proposalRepository.saveAndFlush(Proposal.create(project, freelancerProfile, "hello"));
+
+        mockMvc.perform(patch("/api/v1/proposals/{proposalId}/reject", proposal.getId())
+                        .with(freelancerPrincipal(freelancerUser)))
+                .andExpect(status().isNotFound());
     }
 }

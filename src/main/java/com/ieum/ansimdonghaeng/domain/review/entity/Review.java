@@ -28,6 +28,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "REVIEW")
@@ -65,6 +67,7 @@ public class Review extends BaseAuditEntity {
     @Column(name = "CONTENT")
     private String content;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "BLINDED_YN", nullable = false, length = 1)
     private String blindedYn;
 
