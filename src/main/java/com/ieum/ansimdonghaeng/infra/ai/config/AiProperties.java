@@ -20,6 +20,8 @@ public class AiProperties {
 
     private String apiKey;
 
+    private String model = "gpt-4o";
+
     @Positive
     private int connectTimeoutMillis = 3000;
 

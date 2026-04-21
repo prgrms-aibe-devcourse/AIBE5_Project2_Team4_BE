@@ -108,9 +108,6 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         codeValidationService.validateProjectTypeCode(request.projectTypeCode(), "projectTypeCode");
         codeValidationService.validateRegionCode(request.serviceRegionCode(), "serviceRegionCode");
-        if (StringUtils.hasText(request.timeSlotCode())) {
-            codeValidationService.validateAvailableTimeSlotCodes(Set.of(request.timeSlotCode()), "timeSlotCode");
-        }
 
         return new RecommendationTarget(
                 null,
