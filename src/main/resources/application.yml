@@ -18,6 +18,17 @@ spring:
     multipart:
       max-file-size: ${MULTIPART_MAX_FILE_SIZE:20MB}
       max-request-size: ${MULTIPART_MAX_REQUEST_SIZE:25MB}
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: ${SERVER_PORT:8080}
@@ -59,3 +70,9 @@ app:
     base-url: ${AI_BASE_URL:https://example.invalid}
     connect-timeout-millis: ${AI_CONNECT_TIMEOUT_MILLIS:3000}
     response-timeout-millis: ${AI_RESPONSE_TIMEOUT_MILLIS:5000}
+  password-reset:
+    token-expiration-minutes: ${PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES:10}
+    reset-url-base: ${PASSWORD_RESET_URL_BASE:http://localhost:5173/reset-password}
+
+mail:
+  enabled: ${MAIL_ENABLED:false}

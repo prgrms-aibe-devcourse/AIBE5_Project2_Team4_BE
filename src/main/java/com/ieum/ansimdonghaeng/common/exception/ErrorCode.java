@@ -48,6 +48,7 @@ public enum ErrorCode {
     USER_INACTIVE(HttpStatus.FORBIDDEN, "AUTH_403", "User account is inactive."),
     OAUTH_EMAIL_NOT_PROVIDED(HttpStatus.BAD_REQUEST, "AUTH_400_OAUTH_EMAIL", "OAuth provider did not provide an email."),
     OAUTH_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, "AUTH_502_OAUTH_PROVIDER", "OAuth provider request failed."),
+    INVALID_RESET_TOKEN(HttpStatus.BAD_REQUEST, "AUTH_400_RESET", "Password reset token is invalid or expired."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_500", "Unexpected server error.");
 
     private final HttpStatus status;

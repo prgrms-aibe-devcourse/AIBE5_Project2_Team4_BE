@@ -69,6 +69,10 @@ public class User extends BaseAuditEntity {
         this.activeYn = active;
     }
 
+    public void updatePasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     public UserRole getRole() {
         return UserRole.fromCode(roleCode);
     }
