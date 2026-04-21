@@ -20,8 +20,4 @@ public class AiClient {
                 .retrieve()
                 .bodyToMono(AiChatResponse.class);
     }
-
-    public Mono<String> requestChatText(AiChatRequest request) {
-        return requestChat(request).map(AiChatResponse::result);
-    }
 }

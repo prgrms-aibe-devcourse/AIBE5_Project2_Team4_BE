@@ -67,9 +67,7 @@ app:
   file-storage:
     base-dir: ${FILE_STORAGE_BASE_DIR:./storage/default}
   ai:
-    enabled: ${AI_ENABLED:false}
     base-url: ${AI_BASE_URL:https://example.invalid}
-    api-key: ${AI_API_KEY:}
     connect-timeout-millis: ${AI_CONNECT_TIMEOUT_MILLIS:3000}
     response-timeout-millis: ${AI_RESPONSE_TIMEOUT_MILLIS:5000}
   password-reset:

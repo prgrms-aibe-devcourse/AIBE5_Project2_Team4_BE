@@ -16,10 +16,6 @@ public class AiProperties {
     @NotBlank
     private String baseUrl;
 
-    private boolean enabled = false;
-
-    private String apiKey;
-
     @Positive
     private int connectTimeoutMillis = 3000;
 
