@@ -4,10 +4,13 @@ import com.ieum.ansimdonghaeng.common.response.ApiResponse;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.AuthLoginRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.AuthRefreshRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.AuthSignupRequest;
+import com.ieum.ansimdonghaeng.domain.auth.dto.request.ForgotPasswordRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.request.KakaoOAuthLoginRequest;
+import com.ieum.ansimdonghaeng.domain.auth.dto.request.ResetPasswordRequest;
 import com.ieum.ansimdonghaeng.domain.auth.dto.response.AuthSignupResponse;
 import com.ieum.ansimdonghaeng.domain.auth.dto.response.AuthTokenResponse;
 import com.ieum.ansimdonghaeng.domain.auth.service.AuthService;
+import com.ieum.ansimdonghaeng.domain.auth.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthTokenResponse>> login(@Valid @RequestBody AuthLoginRequest request) {
@@ -49,6 +53,18 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(Authentication authentication) {
         authService.logout(authentication.getName());
+        return ResponseEntity.ok(ApiResponse.empty());
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.sendResetEmail(request);
+        return ResponseEntity.ok(ApiResponse.empty());
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
         return ResponseEntity.ok(ApiResponse.empty());
     }
 }
