@@ -133,6 +133,17 @@ public class NotificationService {
         ));
     }
 
+    @Transactional
+    public void deleteNotification(Long currentUserId, Long notificationId) {
+        requireActiveUser(currentUserId);
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
+        if (!notification.getUser().getId().equals(currentUserId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+        notificationRepository.delete(notification);
+    }
+
     private User requireActiveUser(Long currentUserId) {
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "User was not found."));

@@ -1,5 +1,6 @@
 package com.ieum.ansimdonghaeng.domain.notification.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -126,5 +127,68 @@ class NotificationControllerIntegrationTest extends AdminIntegrationTestSupport 
                         .with(userPrincipal(otherUser)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value("NOTIFICATION_404_1"));
+    }
+
+    @Test
+    void deleteNotificationSuccess() throws Exception {
+        User admin = saveUser("admin@test.com", "admin", UserRole.ADMIN);
+        User user = saveUser("user@test.com", "user", UserRole.USER);
+
+        mockMvc.perform(post("/api/v1/admin/notices")
+                        .with(adminPrincipal(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(java.util.Map.of(
+                                "title", "notice title",
+                                "content", "notice content",
+                                "publishNow", true
+                        ))))
+                .andExpect(status().isOk());
+
+        Notification notification = notificationRepository.findAll().stream()
+                .filter(n -> n.getUser().getId().equals(user.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(delete("/api/v1/notifications/{notificationId}", notification.getId())
+                        .with(userPrincipal(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    void deleteNotificationReturns404WhenNotFound() throws Exception {
+        User user = saveUser("user@test.com", "user", UserRole.USER);
+
+        mockMvc.perform(delete("/api/v1/notifications/{notificationId}", Long.MAX_VALUE)
+                        .with(userPrincipal(user)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("NOTIFICATION_404_1"));
+    }
+
+    @Test
+    void deleteNotificationReturns403WhenNotOwner() throws Exception {
+        User admin = saveUser("admin@test.com", "admin", UserRole.ADMIN);
+        User owner = saveUser("owner@test.com", "owner", UserRole.USER);
+        User otherUser = saveUser("other@test.com", "other", UserRole.USER);
+
+        mockMvc.perform(post("/api/v1/admin/notices")
+                        .with(adminPrincipal(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(java.util.Map.of(
+                                "title", "notice title",
+                                "content", "notice content",
+                                "publishNow", true
+                        ))))
+                .andExpect(status().isOk());
+
+        Notification ownersNotification = notificationRepository.findAll().stream()
+                .filter(n -> n.getUser().getId().equals(owner.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(delete("/api/v1/notifications/{notificationId}", ownersNotification.getId())
+                        .with(userPrincipal(otherUser)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("COMMON_403"));
     }
 }
