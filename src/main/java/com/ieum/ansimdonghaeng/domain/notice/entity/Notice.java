@@ -19,6 +19,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "NOTICE")
@@ -44,6 +46,7 @@ public class Notice extends BaseAuditEntity {
     @Column(name = "CONTENT", nullable = false)
     private String content;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "PUBLISHED_YN", nullable = false, length = 1)
     private Boolean publishedYn;
 

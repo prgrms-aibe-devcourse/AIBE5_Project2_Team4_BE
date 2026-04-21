@@ -98,27 +98,25 @@ class UserControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("role user cannot access admin endpoint")
-    void userCannotAccessAdminEndpoint() throws Exception {
-        User user = userRepository.save(createUser("user@test.com", "normal-user", "ROLE_USER"));
-        String token = bearerToken(user.getEmail(), user.getRoleCode());
+    @DisplayName("debug admin access-check endpoint is removed")
+    void adminAccessCheckEndpointRemoved() throws Exception {
+        User admin = userRepository.save(createUser("admin@test.com", "admin-user", "ROLE_ADMIN"));
+        String token = bearerToken(admin.getEmail(), admin.getRoleCode());
 
         mockMvc.perform(get("/api/v1/admin/access-check")
                         .header(HttpHeaders.AUTHORIZATION, token))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("role freelancer can access freelancer workspace")
-    void freelancerCanAccessFreelancerWorkspace() throws Exception {
+    @DisplayName("debug freelancer workspace endpoint is removed")
+    void freelancerWorkspaceEndpointRemoved() throws Exception {
         User user = userRepository.save(createUser("freelancer@test.com", "freelancer-user", "ROLE_FREELANCER"));
         String token = bearerToken(user.getEmail(), user.getRoleCode());
 
         mockMvc.perform(get("/api/v1/freelancers/me/workspace")
                         .header(HttpHeaders.AUTHORIZATION, token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.scope").value("freelancer"))
-                .andExpect(jsonPath("$.data.roleCode").value("ROLE_FREELANCER"));
+                .andExpect(status().isNotFound());
     }
 
     private User createUser(String email, String name, String roleCode) {

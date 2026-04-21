@@ -1,10 +1,11 @@
 package com.ieum.ansimdonghaeng.common.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import java.time.LocalDateTime;
 
 public record ErrorResponse(
-        String code,
+        String errorCode,
         String message,
         int status,
         LocalDateTime timestamp,
@@ -23,5 +24,10 @@ public record ErrorResponse(
                 LocalDateTime.now(),
                 path
         );
+    }
+
+    @JsonProperty("code")
+    public String code() {
+        return errorCode;
     }
 }

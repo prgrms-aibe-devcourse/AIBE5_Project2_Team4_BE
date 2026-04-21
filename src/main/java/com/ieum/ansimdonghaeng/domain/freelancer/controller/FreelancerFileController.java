@@ -55,6 +55,6 @@ public class FreelancerFileController {
             @PathVariable Long fileId
     ) {
         freelancerService.deleteMyFile(AuthenticatedUserSupport.currentUserId(userDetails), fileId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.empty());
+        return ResponseEntity.ok(ApiResponse.empty());
     }
 }

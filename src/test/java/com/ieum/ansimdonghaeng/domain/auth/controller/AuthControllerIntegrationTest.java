@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -73,7 +74,7 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(post("/api/v1/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.email").value("new-user@test.com"))
                 .andExpect(jsonPath("$.data.roleCode").value("ROLE_USER"));
@@ -169,6 +170,10 @@ class AuthControllerIntegrationTest {
                 .path("data")
                 .path("refreshToken")
                 .asText();
+        String storedRefreshTokenValue = refreshTokenRepository.findAll().stream()
+                .findFirst()
+                .orElseThrow()
+                .getTokenValue();
 
         mockMvc.perform(post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -177,6 +182,10 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.data.refreshToken").isNotEmpty())
                 .andExpect(jsonPath("$.data.user.email").value("refresh@test.com"));
+
+        org.assertj.core.api.Assertions.assertThat(storedRefreshTokenValue)
+                .startsWith("hmac-sha256:")
+                .isNotEqualTo(refreshToken);
     }
 
     @Test
@@ -240,6 +249,8 @@ class AuthControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new AuthRefreshRequest(refreshToken))))
                 .andExpect(status().isOk())
+                .andExpect(header().string("Deprecation", "true"))
+                .andExpect(header().string(HttpHeaders.LINK, "</api/v1/auth/refresh>; rel=\"successor-version\""))
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.data.refreshToken").isNotEmpty())
                 .andExpect(jsonPath("$.data.user.email").value("reissue@test.com"));
@@ -270,7 +281,8 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(post("/api/v1/auth/logout")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.revokedRefreshTokenCount").value(1));
     }
 
     @Test
@@ -301,7 +313,8 @@ class AuthControllerIntegrationTest {
 
         mockMvc.perform(post("/api/v1/auth/logout")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.revokedRefreshTokenCount").value(1));
 
         mockMvc.perform(post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)

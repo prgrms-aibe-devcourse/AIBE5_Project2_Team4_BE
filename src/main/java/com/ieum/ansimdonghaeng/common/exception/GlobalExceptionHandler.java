@@ -19,6 +19,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 @Slf4j
@@ -88,6 +89,17 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.badRequest().body(ApiResponse.error(errorResponse));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(NoResourceFoundException exception,
+                                                                            HttpServletRequest request) {
+        ErrorResponse errorResponse = ErrorResponse.of(
+                ErrorCode.RESOURCE_NOT_FOUND,
+                ErrorCode.RESOURCE_NOT_FOUND.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(ErrorCode.RESOURCE_NOT_FOUND.getStatus()).body(ApiResponse.error(errorResponse));
     }
 
     @ExceptionHandler({AccessDeniedException.class, AuthorizationDeniedException.class})

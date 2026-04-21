@@ -33,6 +33,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -77,8 +78,17 @@ public abstract class AdminIntegrationTestSupport {
     @Autowired
     protected PasswordEncoder passwordEncoder;
 
+    @BeforeEach
+    void cleanUpAdminDataBeforeEach() {
+        cleanUpAdminData();
+    }
+
     @AfterEach
-    void cleanUpAdminData() {
+    void cleanUpAdminDataAfterEach() {
+        cleanUpAdminData();
+    }
+
+    private void cleanUpAdminData() {
         notificationRepository.deleteAll();
         freelancerFileRepository.deleteAll();
         verificationFileRepository.deleteAll();
