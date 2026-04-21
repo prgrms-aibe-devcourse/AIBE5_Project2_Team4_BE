@@ -12,3 +12,5 @@ out/
 build/
 logs/
 *.log
+application-local.yml
+.claude/
