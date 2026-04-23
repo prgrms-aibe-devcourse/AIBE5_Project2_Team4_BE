@@ -41,6 +41,8 @@ public enum ErrorCode {
     PROJECT_ADMIN_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT_400_4",
             "Project status does not allow admin cancellation."),
     REPORT_ALREADY_HANDLED(HttpStatus.CONFLICT, "REPORT_409_1", "Report has already been handled."),
+    NOTICE_UPDATE_EMPTY(HttpStatus.BAD_REQUEST, "NOTICE_400_1",
+            "At least one field must be provided for notice update."),
     NOTICE_ALREADY_PUBLISHED(HttpStatus.CONFLICT, "NOTICE_409_1", "Notice has already been published."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "AUTH_409", "Email is already registered."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH_401", "Invalid email or password."),

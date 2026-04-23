@@ -20,7 +20,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     long countByUser_IdAndReadYnFalse(Long userId);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("""
             update Notification notification
             set notification.readYn = true,
@@ -29,4 +29,22 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
               and notification.readYn = false
             """)
     int markAllAsRead(@Param("userId") Long userId, @Param("readAt") LocalDateTime readAt);
+
+    @Modifying(flushAutomatically = true)
+    @Query("""
+            update Notification notification
+            set notification.title = :title,
+                notification.content = :content
+            where notification.relatedNoticeId = :noticeId
+            """)
+    int updateNoticeSnapshot(@Param("noticeId") Long noticeId,
+                             @Param("title") String title,
+                             @Param("content") String content);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            delete from Notification notification
+            where notification.relatedNoticeId = :noticeId
+            """)
+    int deleteAllByRelatedNoticeId(@Param("noticeId") Long noticeId);
 }

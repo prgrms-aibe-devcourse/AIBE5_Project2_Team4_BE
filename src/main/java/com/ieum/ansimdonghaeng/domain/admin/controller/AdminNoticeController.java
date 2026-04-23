@@ -3,6 +3,7 @@ package com.ieum.ansimdonghaeng.domain.admin.controller;
 import com.ieum.ansimdonghaeng.common.response.ApiResponse;
 import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
 import com.ieum.ansimdonghaeng.domain.admin.dto.request.AdminNoticeCreateRequest;
+import com.ieum.ansimdonghaeng.domain.admin.dto.request.AdminNoticeUpdateRequest;
 import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminNoticeResponse;
 import com.ieum.ansimdonghaeng.domain.admin.service.AdminNoticeService;
 import com.ieum.ansimdonghaeng.domain.admin.support.AdminAuthenticationSupport;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +36,20 @@ public class AdminNoticeController {
         return ResponseEntity.ok(ApiResponse.success(
                 adminNoticeService.createNotice(AdminAuthenticationSupport.currentUserId(userDetails), request)
         ));
+    }
+
+    @PatchMapping("/{noticeId}")
+    public ResponseEntity<ApiResponse<AdminNoticeResponse>> updateNotice(
+            @PathVariable Long noticeId,
+            @Valid @RequestBody AdminNoticeUpdateRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(adminNoticeService.updateNotice(noticeId, request)));
+    }
+
+    @DeleteMapping("/{noticeId}")
+    public ResponseEntity<ApiResponse<Void>> deleteNotice(@PathVariable Long noticeId) {
+        adminNoticeService.deleteNotice(noticeId);
+        return ResponseEntity.ok(ApiResponse.empty());
     }
 
     @PatchMapping("/{noticeId}/publish")

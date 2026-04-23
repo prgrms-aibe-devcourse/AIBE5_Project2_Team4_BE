@@ -3,6 +3,7 @@ package com.ieum.ansimdonghaeng.domain.admin.service;
 import com.ieum.ansimdonghaeng.common.exception.CustomException;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.domain.admin.dto.request.AdminNoticeCreateRequest;
+import com.ieum.ansimdonghaeng.domain.admin.dto.request.AdminNoticeUpdateRequest;
 import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminNoticeResponse;
 import com.ieum.ansimdonghaeng.domain.admin.support.AdminResponseMapper;
 import com.ieum.ansimdonghaeng.domain.notice.entity.Notice;
@@ -44,6 +45,32 @@ public class AdminNoticeService {
             fanOutNoticeNotification(notice);
         }
         return toResponse(notice);
+    }
+
+    @Transactional
+    public AdminNoticeResponse updateNotice(Long noticeId, AdminNoticeUpdateRequest request) {
+        if (!request.hasChanges()) {
+            throw new CustomException(ErrorCode.NOTICE_UPDATE_EMPTY);
+        }
+
+        Notice notice = noticeRepository.findDetailById(noticeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
+        String title = request.title() != null ? request.title() : notice.getTitle();
+        String content = request.content() != null ? request.content() : notice.getContent();
+
+        notice.update(title, content);
+        if (notice.isPublished()) {
+            notificationRepository.updateNoticeSnapshot(notice.getId(), title, truncate(content, 2000));
+        }
+        return toResponse(notice);
+    }
+
+    @Transactional
+    public void deleteNotice(Long noticeId) {
+        Notice notice = noticeRepository.findById(noticeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
+        notificationRepository.deleteAllByRelatedNoticeId(notice.getId());
+        noticeRepository.delete(notice);
     }
 
     @Transactional

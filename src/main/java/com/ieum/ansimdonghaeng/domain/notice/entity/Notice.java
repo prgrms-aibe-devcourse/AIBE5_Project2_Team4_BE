@@ -80,6 +80,11 @@ public class Notice extends BaseAuditEntity {
         return Boolean.TRUE.equals(publishedYn);
     }
 
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
+
     public void publish(LocalDateTime publishedAt) {
         this.publishedYn = true;
         this.publishedAt = publishedAt;
