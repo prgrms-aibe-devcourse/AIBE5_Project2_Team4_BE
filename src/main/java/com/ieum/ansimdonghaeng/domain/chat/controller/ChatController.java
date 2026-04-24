@@ -55,7 +55,8 @@ public class ChatController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
                 chatService.getOrCreateConversation(
                         AuthenticatedUserSupport.currentUserId(userDetails),
-                        request.targetUserId()
+                        request.targetUserId(),
+                        request.targetFreelancerProfileId()
                 )
         ));
     }

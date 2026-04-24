@@ -11,10 +11,14 @@ import com.ieum.ansimdonghaeng.common.jwt.JwtTokenProvider;
 import com.ieum.ansimdonghaeng.domain.chat.entity.ChatConversation;
 import com.ieum.ansimdonghaeng.domain.chat.repository.ChatConversationRepository;
 import com.ieum.ansimdonghaeng.domain.chat.repository.ChatMessageRepository;
+import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerProfile;
+import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +53,9 @@ class ChatControllerIntegrationTest {
     private ChatMessageRepository chatMessageRepository;
 
     @Autowired
+    private FreelancerProfileRepository freelancerProfileRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -58,6 +65,7 @@ class ChatControllerIntegrationTest {
     void setUp() {
         chatMessageRepository.deleteAll();
         chatConversationRepository.deleteAll();
+        freelancerProfileRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -111,6 +119,27 @@ class ChatControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("user can create conversation by public freelancer profile id")
+    void createConversationWithFreelancerProfileId() throws Exception {
+        User user = userRepository.save(createUser("user-profile-chat@test.com", "user", "ROLE_USER"));
+        User freelancer = userRepository.save(createUser(
+                "freelancer-profile-chat@test.com",
+                "profile freelancer",
+                "ROLE_FREELANCER"
+        ));
+        FreelancerProfile profile = freelancerProfileRepository.save(createProfile(freelancer, true));
+
+        mockMvc.perform(post("/api/v1/chats/conversations")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("targetFreelancerProfileId", profile.getId()))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.otherUserId").value(freelancer.getId()))
+                .andExpect(jsonPath("$.data.otherUserName").value("profile freelancer"));
+    }
+
+    @Test
     @DisplayName("same role participants cannot create conversation")
     void createConversationFailsForSameRole() throws Exception {
         User freelancerA = userRepository.save(createUser("freelancer-a@test.com", "freelancer-a", "ROLE_FREELANCER"));
@@ -151,6 +180,21 @@ class ChatControllerIntegrationTest {
                 .roleCode(roleCode)
                 .activeYn(true)
                 .build();
+    }
+
+    private FreelancerProfile createProfile(User user, boolean publicYn) {
+        return FreelancerProfile.create(
+                user,
+                "career description",
+                true,
+                true,
+                new BigDecimal("4.50"),
+                12L,
+                publicYn,
+                Set.of("SEOUL_GANGNAM"),
+                Set.of("MORNING"),
+                Set.of("HOSPITAL_COMPANION")
+        );
     }
 
     private String bearerToken(User user) {

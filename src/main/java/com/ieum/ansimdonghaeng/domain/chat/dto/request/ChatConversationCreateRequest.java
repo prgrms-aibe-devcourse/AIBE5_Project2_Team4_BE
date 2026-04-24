@@ -1,9 +1,12 @@
 package com.ieum.ansimdonghaeng.domain.chat.dto.request;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 public record ChatConversationCreateRequest(
-        @NotNull(message = "targetUserId is required")
-        Long targetUserId
+        @Positive(message = "targetUserId must be positive")
+        Long targetUserId,
+
+        @Positive(message = "targetFreelancerProfileId must be positive")
+        Long targetFreelancerProfileId
 ) {
 }

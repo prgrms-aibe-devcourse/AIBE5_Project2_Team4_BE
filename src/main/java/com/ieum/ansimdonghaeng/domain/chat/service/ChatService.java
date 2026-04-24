@@ -10,6 +10,8 @@ import com.ieum.ansimdonghaeng.domain.chat.entity.ChatConversation;
 import com.ieum.ansimdonghaeng.domain.chat.entity.ChatMessage;
 import com.ieum.ansimdonghaeng.domain.chat.repository.ChatConversationRepository;
 import com.ieum.ansimdonghaeng.domain.chat.repository.ChatMessageRepository;
+import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerProfile;
+import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
 import com.ieum.ansimdonghaeng.domain.user.entity.User;
 import com.ieum.ansimdonghaeng.domain.user.entity.UserRole;
 import com.ieum.ansimdonghaeng.domain.user.repository.UserRepository;
@@ -32,13 +34,16 @@ public class ChatService {
 
     private final ChatConversationRepository chatConversationRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final FreelancerProfileRepository freelancerProfileRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
 
     @Transactional
-    public ChatConversationSummaryResponse getOrCreateConversation(Long currentUserId, Long targetUserId) {
+    public ChatConversationSummaryResponse getOrCreateConversation(Long currentUserId,
+                                                                   Long targetUserId,
+                                                                   Long targetFreelancerProfileId) {
         User currentUser = getActiveUser(currentUserId);
-        User targetUser = getActiveUser(targetUserId);
+        User targetUser = getActiveUser(resolveTargetUserId(targetUserId, targetFreelancerProfileId));
         validateParticipants(currentUser, targetUser);
 
         ChatConversation conversation = findOrCreateConversation(currentUser, targetUser);
@@ -107,6 +112,34 @@ public class ChatService {
         getOwnedConversation(currentUserId, conversationId);
         int readCount = chatMessageRepository.markConversationAsRead(conversationId, currentUserId, LocalDateTime.now());
         return new ChatReadResponse(conversationId, readCount);
+    }
+
+    private Long resolveTargetUserId(Long targetUserId, Long targetFreelancerProfileId) {
+        boolean hasTargetUserId = targetUserId != null;
+        boolean hasTargetFreelancerProfileId = targetFreelancerProfileId != null;
+        if (hasTargetUserId == hasTargetFreelancerProfileId) {
+            throw new CustomException(
+                    ErrorCode.INVALID_INPUT_VALUE,
+                    "Provide exactly one of targetUserId or targetFreelancerProfileId."
+            );
+        }
+
+        if (hasTargetUserId) {
+            return targetUserId;
+        }
+
+        FreelancerProfile profile = freelancerProfileRepository.findDetailById(targetFreelancerProfileId)
+                .orElseThrow(() -> new CustomException(ErrorCode.FREELANCER_NOT_FOUND));
+        validateTargetFreelancerProfile(profile);
+        return profile.getUser().getId();
+    }
+
+    private void validateTargetFreelancerProfile(FreelancerProfile profile) {
+        if (!profile.isPublicProfile()
+                || Boolean.FALSE.equals(profile.getUser().getActiveYn())
+                || profile.getUser().getRole() != UserRole.FREELANCER) {
+            throw new CustomException(ErrorCode.FREELANCER_NOT_FOUND);
+        }
     }
 
     private ChatConversation findOrCreateConversation(User currentUser, User targetUser) {
