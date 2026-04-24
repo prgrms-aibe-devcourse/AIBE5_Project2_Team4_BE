@@ -146,6 +146,31 @@ class ProjectControllerIntegrationTest {
     }
 
     @Test
+    void listRecruitingProjectsForFreelancerSuccess() throws Exception {
+        Project requested = persistProject(1L, "recruiting project", ProjectStatus.REQUESTED);
+        persistProject(2L, "accepted project", ProjectStatus.ACCEPTED);
+        persistProject(3L, "cancelled project", ProjectStatus.CANCELLED);
+
+        mockMvc.perform(get("/api/v1/projects")
+                        .with(authenticatedFreelancer(9L)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(10))
+                .andExpect(jsonPath("$.data.content[0].projectId").value(requested.getId()))
+                .andExpect(jsonPath("$.data.content[0].status").value("REQUESTED"));
+    }
+
+    @Test
+    void listRecruitingProjectsRejectsRequesterRole() throws Exception {
+        mockMvc.perform(get("/api/v1/projects")
+                        .with(authenticatedUser(1L)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
     void getProjectSuccess() throws Exception {
         Project project = persistProject(1L, "상세 조회 프로젝트", ProjectStatus.REQUESTED);
 
@@ -292,11 +317,19 @@ class ProjectControllerIntegrationTest {
     }
 
     private RequestPostProcessor authenticatedUser(Long userId) {
+        return authenticatedUser(userId, UserRole.USER);
+    }
+
+    private RequestPostProcessor authenticatedFreelancer(Long userId) {
+        return authenticatedUser(userId, UserRole.FREELANCER);
+    }
+
+    private RequestPostProcessor authenticatedUser(Long userId, UserRole role) {
         return user(CustomUserDetails.builder()
                 .userId(userId)
                 .username("user" + userId)
                 .password("{noop}password")
-                .authorities(List.of(new SimpleGrantedAuthority(UserRole.USER.asAuthority())))
+                .authorities(List.of(new SimpleGrantedAuthority(role.asAuthority())))
                 .enabled(true)
                 .build());
     }
