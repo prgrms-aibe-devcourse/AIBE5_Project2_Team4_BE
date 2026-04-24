@@ -29,6 +29,8 @@ class ProjectStatusTransitionIntegrationTest extends AdminIntegrationTestSupport
         User owner = saveUser("owner@test.com", "owner", UserRole.USER);
         User freelancerUser = saveUser("freelancer@test.com", "freelancer", UserRole.FREELANCER);
         var freelancerProfile = saveFreelancerProfile(freelancerUser, true, true);
+        freelancerProfile.updateStats(java.math.BigDecimal.ZERO, 0L);
+        freelancerProfileRepository.saveAndFlush(freelancerProfile);
         var project = saveProject(owner, ProjectStatus.REQUESTED);
         saveAcceptedProposal(project, freelancerProfile);
         project.accept(LocalDateTime.of(2026, 4, 18, 10, 0));
@@ -41,6 +43,9 @@ class ProjectStatusTransitionIntegrationTest extends AdminIntegrationTestSupport
         mockMvc.perform(patch("/api/v1/projects/{projectId}/complete", project.getId()).with(freelancerPrincipal(freelancerUser)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("COMPLETED"));
+
+        var refreshedProfile = freelancerProfileRepository.findById(freelancerProfile.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(refreshedProfile.getActivityCount()).isEqualTo(1L);
     }
 
     @Test

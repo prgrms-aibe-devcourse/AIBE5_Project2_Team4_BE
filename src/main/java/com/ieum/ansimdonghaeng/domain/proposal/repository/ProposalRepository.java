@@ -32,6 +32,16 @@ public interface ProposalRepository extends JpaRepository<Proposal, Long>, Propo
     Optional<Proposal> findAcceptedProposalByProjectId(@Param("projectId") Long projectId);
 
     @Query("""
+            select count(proposal)
+            from Proposal proposal
+            join proposal.project project
+            where proposal.freelancerProfile.id = :freelancerProfileId
+              and proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
+              and project.status = com.ieum.ansimdonghaeng.domain.project.entity.ProjectStatus.COMPLETED
+            """)
+    long countCompletedAcceptedProjectsByFreelancerProfileId(@Param("freelancerProfileId") Long freelancerProfileId);
+
+    @Query("""
             select proposal
             from Proposal proposal
             join fetch proposal.project project

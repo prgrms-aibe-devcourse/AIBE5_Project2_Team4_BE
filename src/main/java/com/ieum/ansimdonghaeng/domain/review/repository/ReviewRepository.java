@@ -53,4 +53,17 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
             where review.id = :reviewId
             """)
     Optional<Review> findDetailById(@Param("reviewId") Long reviewId);
+
+    @Query("""
+            select avg(review.rating)
+            from Review review
+            join review.project project
+            join com.ieum.ansimdonghaeng.domain.proposal.entity.Proposal proposal
+              on proposal.project = project
+            where proposal.freelancerProfile.id = :freelancerProfileId
+              and proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
+              and review.reviewerUserId = project.ownerUserId
+              and review.blindedYn = 'N'
+            """)
+    Double findPublicAverageRatingByFreelancerProfileId(@Param("freelancerProfileId") Long freelancerProfileId);
 }

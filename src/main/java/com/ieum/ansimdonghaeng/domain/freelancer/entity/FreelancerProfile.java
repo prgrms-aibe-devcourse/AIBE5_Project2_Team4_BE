@@ -166,4 +166,9 @@ public class FreelancerProfile extends BaseAuditEntity {
     public void markVerified() {
         this.verifiedYn = true;
     }
+
+    public void updateStats(BigDecimal averageRating, Long activityCount) {
+        this.averageRating = averageRating == null ? BigDecimal.ZERO : averageRating;
+        this.activityCount = activityCount == null ? 0L : activityCount;
+    }
 }

@@ -4,6 +4,7 @@ import com.ieum.ansimdonghaeng.common.exception.CustomException;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.common.response.PageResponse;
 import com.ieum.ansimdonghaeng.domain.freelancer.service.FreelancerService;
+import com.ieum.ansimdonghaeng.domain.freelancer.service.FreelancerStatsService;
 import com.ieum.ansimdonghaeng.domain.project.entity.Project;
 import com.ieum.ansimdonghaeng.domain.project.entity.ProjectStatus;
 import com.ieum.ansimdonghaeng.domain.project.repository.ProjectRepository;
@@ -43,6 +44,7 @@ public class ReviewService {
     private final ReportRepository reportRepository;
     private final ReviewTagCodeRepository reviewTagCodeRepository;
     private final FreelancerService freelancerService;
+    private final FreelancerStatsService freelancerStatsService;
 
     @Transactional
     public ReviewDetailResponse createReview(Long currentUserId, Long projectId, ReviewCreateRequest request) {
@@ -96,6 +98,7 @@ public class ReviewService {
         } catch (DataIntegrityViolationException exception) {
             throw new CustomException(ErrorCode.REVIEW_ALREADY_EXISTS);
         }
+        freelancerStatsService.refreshStats(acceptedProposal.getFreelancerProfile().getId());
         Review detailReview = reviewRepository.findDetailById(savedReview.getId()).orElse(savedReview);
         return ReviewDetailResponse.from(detailReview, acceptedProposal, false);
     }
@@ -140,6 +143,9 @@ public class ReviewService {
         review.update(request.rating(), request.content(), normalizeTagCodes(request.tagCodes()));
 
         Proposal acceptedProposal = proposalRepository.findAcceptedProposalByProjectId(review.getProject().getId()).orElse(null);
+        if (acceptedProposal != null) {
+            freelancerStatsService.refreshStats(acceptedProposal.getFreelancerProfile().getId());
+        }
         boolean reported = reportRepository.existsByReview_Id(reviewId);
         return ReviewDetailResponse.from(review, acceptedProposal, reported);
     }
@@ -147,7 +153,11 @@ public class ReviewService {
     @Transactional
     public ReviewDeleteResponse deleteMyReview(Long currentUserId, Long reviewId) {
         Review review = getOwnedReview(reviewId, currentUserId);
+        Proposal acceptedProposal = proposalRepository.findAcceptedProposalByProjectId(review.getProject().getId()).orElse(null);
         reviewRepository.delete(review);
+        if (acceptedProposal != null) {
+            freelancerStatsService.refreshStats(acceptedProposal.getFreelancerProfile().getId());
+        }
         return new ReviewDeleteResponse(reviewId, true);
     }
 

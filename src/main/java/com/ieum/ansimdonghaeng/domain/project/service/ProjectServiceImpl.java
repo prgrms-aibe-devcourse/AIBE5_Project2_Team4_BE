@@ -3,6 +3,7 @@ package com.ieum.ansimdonghaeng.domain.project.service;
 import com.ieum.ansimdonghaeng.common.exception.CustomException;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.domain.code.service.CodeValidationService;
+import com.ieum.ansimdonghaeng.domain.freelancer.service.FreelancerStatsService;
 import com.ieum.ansimdonghaeng.domain.notification.service.NotificationService;
 import com.ieum.ansimdonghaeng.domain.project.dto.request.ProjectCancelRequest;
 import com.ieum.ansimdonghaeng.domain.project.dto.request.ProjectCreateRequest;
@@ -34,6 +35,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final CodeValidationService codeValidationService;
     private final ProposalRepository proposalRepository;
     private final NotificationService notificationService;
+    private final FreelancerStatsService freelancerStatsService;
 
     @Override
     @Transactional
@@ -153,6 +155,7 @@ public class ProjectServiceImpl implements ProjectService {
         validateAssignedFreelancer(currentUserId, adminOverride, acceptedProposal);
 
         project.complete(LocalDateTime.now());
+        freelancerStatsService.refreshStats(acceptedProposal.getFreelancerProfile().getId());
         notificationService.notifyProjectStatusChanged(project, acceptedProposal);
         notificationService.notifyReviewRequest(project, acceptedProposal);
         return ProjectDetailResponse.from(project);

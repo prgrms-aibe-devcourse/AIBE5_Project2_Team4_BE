@@ -1,9 +1,11 @@
 package com.ieum.ansimdonghaeng.domain.review.controller;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.closeTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -185,6 +187,67 @@ class ReviewControllerIntegrationTest extends AdminIntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalElements").value(1))
                 .andExpect(jsonPath("$.data.content[0].reviewId").value(visibleReview.getId()));
+    }
+
+    @Test
+    void freelancerListAndDetailReflectRecalculatedStatsAfterReviewChanges() throws Exception {
+        User owner = saveUser("owner-stats@test.com", "owner", UserRole.USER);
+        User freelancerUser = saveUser("freelancer-stats@test.com", "freelancer", UserRole.FREELANCER);
+        var freelancerProfile = saveFreelancerProfile(freelancerUser, true, true);
+        freelancerProfile.updateStats(java.math.BigDecimal.ZERO, 0L);
+        freelancerProfileRepository.saveAndFlush(freelancerProfile);
+
+        var project = saveProject(owner, ProjectStatus.COMPLETED);
+        saveAcceptedProposal(project, freelancerProfile);
+
+        MvcResult createResult = mockMvc.perform(post("/api/v1/projects/{projectId}/reviews", project.getId())
+                        .with(userPrincipal(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "rating", 5,
+                                "tagCodes", List.of("KIND"),
+                                "content", "great freelancer"
+                        ))))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        long reviewId = objectMapper.readTree(createResult.getResponse().getContentAsString())
+                .path("data")
+                .path("reviewId")
+                .asLong();
+
+        mockMvc.perform(get("/api/v1/freelancers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].activityCount").value(1))
+                .andExpect(jsonPath("$.data.content[0].averageRating", closeTo(5.0, 0.001)));
+
+        mockMvc.perform(get("/api/v1/freelancers/{freelancerProfileId}", freelancerProfile.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.activityCount").value(1))
+                .andExpect(jsonPath("$.data.averageRating", closeTo(5.0, 0.001)));
+
+        mockMvc.perform(patch("/api/v1/users/me/reviews/{reviewId}", reviewId)
+                        .with(userPrincipal(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "rating", 3,
+                                "tagCodes", List.of("KIND"),
+                                "content", "updated review"
+                        ))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/freelancers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].averageRating", closeTo(3.0, 0.001)));
+
+        mockMvc.perform(delete("/api/v1/users/me/reviews/{reviewId}", reviewId)
+                        .with(userPrincipal(owner)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/freelancers/{freelancerProfileId}", freelancerProfile.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.activityCount").value(1))
+                .andExpect(jsonPath("$.data.averageRating", closeTo(0.0, 0.001)));
     }
 
     @Test
