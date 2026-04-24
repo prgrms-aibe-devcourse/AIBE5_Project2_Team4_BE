@@ -71,6 +71,17 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @Operation(summary = "List recruiting projects")
+    @GetMapping
+    @PreAuthorize("hasRole('FREELANCER')")
+    public ResponseEntity<ApiResponse<ProjectListResponse>> getRecruitingProjects(
+            @PositiveOrZero @RequestParam(defaultValue = "0") int page,
+            @Positive @RequestParam(defaultValue = "10") int size
+    ) {
+        ProjectListResponse response = projectService.getRecruitingProjects(page, size);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @Operation(summary = "Get project detail")
     @GetMapping("/{projectId}")
     @PreAuthorize("hasRole('USER')")

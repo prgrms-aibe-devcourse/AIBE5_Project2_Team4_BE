@@ -64,6 +64,13 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public ProjectListResponse getRecruitingProjects(int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<ProjectSummaryView> projectPage = projectRepository.findRecruitingProjects(pageable);
+        return ProjectListResponse.from(projectPage);
+    }
+
+    @Override
     public ProjectDetailResponse getProject(Long currentUserId, Long projectId) {
         return ProjectDetailResponse.from(getOwnedProject(projectId, currentUserId));
     }
