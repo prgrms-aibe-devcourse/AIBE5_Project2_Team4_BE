@@ -184,6 +184,30 @@ class ProjectControllerIntegrationTest {
     }
 
     @Test
+    void getProjectForFreelancerSuccessWhenRequested() throws Exception {
+        Project project = persistProject(1L, "recruiting project detail", ProjectStatus.REQUESTED);
+
+        mockMvc.perform(get("/api/v1/projects/{projectId}", project.getId())
+                        .with(authenticatedFreelancer(9L)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.projectId").value(project.getId()))
+                .andExpect(jsonPath("$.data.ownerUserId").value(1))
+                .andExpect(jsonPath("$.data.status").value("REQUESTED"));
+    }
+
+    @Test
+    void getProjectForFreelancerForbiddenWhenNotRequested() throws Exception {
+        Project project = persistProject(1L, "accepted project detail", ProjectStatus.ACCEPTED);
+
+        mockMvc.perform(get("/api/v1/projects/{projectId}", project.getId())
+                        .with(authenticatedFreelancer(9L)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("PROJECT_403_1"));
+    }
+
+    @Test
     void getProjectForbiddenForNonOwner() throws Exception {
         Project project = persistProject(1L, "권한 체크 프로젝트", ProjectStatus.REQUESTED);
 

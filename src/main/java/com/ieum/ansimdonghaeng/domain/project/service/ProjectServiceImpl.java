@@ -73,8 +73,16 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDetailResponse getProject(Long currentUserId, Long projectId) {
-        return ProjectDetailResponse.from(getOwnedProject(projectId, currentUserId));
+    public ProjectDetailResponse getProject(Long currentUserId, boolean freelancerAccess, Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND));
+
+        if (!project.isOwnedBy(currentUserId)
+                && !(freelancerAccess && project.isRequestedStatus())) {
+            throw new CustomException(ErrorCode.PROJECT_ACCESS_DENIED);
+        }
+
+        return ProjectDetailResponse.from(project);
     }
 
     @Override

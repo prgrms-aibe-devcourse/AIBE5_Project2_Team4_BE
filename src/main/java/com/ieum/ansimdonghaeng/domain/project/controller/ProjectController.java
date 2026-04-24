@@ -84,13 +84,14 @@ public class ProjectController {
 
     @Operation(summary = "Get project detail")
     @GetMapping("/{projectId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','FREELANCER')")
     public ResponseEntity<ApiResponse<ProjectDetailResponse>> getProject(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long projectId
     ) {
         ProjectDetailResponse response = projectService.getProject(
                 AuthenticatedUserSupport.currentUserId(userDetails),
+                hasAuthority(userDetails, "ROLE_FREELANCER"),
                 projectId
         );
         return ResponseEntity.ok(ApiResponse.success(response));
