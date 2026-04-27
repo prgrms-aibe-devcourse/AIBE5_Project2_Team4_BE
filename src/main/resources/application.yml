@@ -71,7 +71,9 @@ app:
   file-storage:
     base-dir: ${FILE_STORAGE_BASE_DIR:./storage/default}
   ai:
-    base-url: ${AI_BASE_URL:https://example.invalid}
+    base-url: ${AI_BASE_URL:https://api.openai.com}
+    api-key: ${OPENAI_API_KEY:}
+    model: ${OPENAI_MODEL:gpt-4o}
     connect-timeout-millis: ${AI_CONNECT_TIMEOUT_MILLIS:3000}
     response-timeout-millis: ${AI_RESPONSE_TIMEOUT_MILLIS:5000}
   password-reset:

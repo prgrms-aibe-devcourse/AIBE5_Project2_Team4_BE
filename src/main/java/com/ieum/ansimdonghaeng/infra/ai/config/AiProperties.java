@@ -16,6 +16,11 @@ public class AiProperties {
     @NotBlank
     private String baseUrl;
 
+    @NotBlank
+    private String model = "gpt-5.2";
+
+    private String apiKey;
+
     @Positive
     private int connectTimeoutMillis = 3000;
 
