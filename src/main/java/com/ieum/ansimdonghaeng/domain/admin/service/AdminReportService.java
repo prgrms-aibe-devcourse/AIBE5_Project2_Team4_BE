@@ -8,6 +8,7 @@ import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminReportListItemResp
 import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminUserSummaryResponse;
 import com.ieum.ansimdonghaeng.domain.admin.support.AdminPageQuerySupport;
 import com.ieum.ansimdonghaeng.domain.admin.support.AdminResponseMapper;
+import com.ieum.ansimdonghaeng.domain.freelancer.service.FreelancerStatsService;
 import com.ieum.ansimdonghaeng.domain.project.entity.Project;
 import com.ieum.ansimdonghaeng.domain.proposal.entity.Proposal;
 import com.ieum.ansimdonghaeng.domain.proposal.repository.ProposalRepository;
@@ -39,6 +40,7 @@ public class AdminReportService {
 
     private final ReportRepository reportRepository;
     private final ProposalRepository proposalRepository;
+    private final FreelancerStatsService freelancerStatsService;
     private final UserRepository userRepository;
     private final EntityManager entityManager;
 
@@ -143,6 +145,8 @@ public class AdminReportService {
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "Admin user was not found."));
         report.resolve(adminUser, java.time.LocalDateTime.now());
         report.getReview().blind();
+        proposalRepository.findAcceptedProposalByProjectId(report.getReview().getProject().getId())
+                .ifPresent(proposal -> freelancerStatsService.refreshStats(proposal.getFreelancerProfile().getId()));
         return toDetailResponse(report);
     }
 

@@ -3,6 +3,7 @@ package com.ieum.ansimdonghaeng.domain.admin.service;
 import com.ieum.ansimdonghaeng.common.exception.CustomException;
 import com.ieum.ansimdonghaeng.common.exception.ErrorCode;
 import com.ieum.ansimdonghaeng.common.response.PageResponse;
+import com.ieum.ansimdonghaeng.domain.freelancer.service.FreelancerStatsService;
 import com.ieum.ansimdonghaeng.domain.admin.dto.request.AdminReviewBlindRequest;
 import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminReviewListItemResponse;
 import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminUserSummaryResponse;
@@ -35,6 +36,7 @@ public class AdminReviewService {
 
     private final ReviewRepository reviewRepository;
     private final ProposalRepository proposalRepository;
+    private final FreelancerStatsService freelancerStatsService;
     private final EntityManager entityManager;
 
     public PageResponse<AdminReviewListItemResponse> getReviews(Boolean blinded, String keyword, Pageable pageable) {
@@ -147,6 +149,7 @@ public class AdminReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
         review.blind();
+        refreshFreelancerStats(review);
         return new AdminReviewVisibilityResponse(review.getId(), true);
     }
 
@@ -155,7 +158,13 @@ public class AdminReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
         review.unblind();
+        refreshFreelancerStats(review);
         return new AdminReviewVisibilityResponse(review.getId(), false);
+    }
+
+    private void refreshFreelancerStats(Review review) {
+        proposalRepository.findAcceptedProposalByProjectId(review.getProject().getId())
+                .ifPresent(proposal -> freelancerStatsService.refreshStats(proposal.getFreelancerProfile().getId()));
     }
 
     private void appendCondition(StringBuilder selectBuilder, StringBuilder countBuilder, String condition) {
