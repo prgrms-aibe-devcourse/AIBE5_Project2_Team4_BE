@@ -128,6 +128,7 @@ public class FreelancerService {
                 storedFile.fileUrl(),
                 file.getContentType(),
                 file.getSize(),
+                storedFile.fileData(),
                 displayOrder
         );
         return FreelancerFileResponse.from(freelancerFileRepository.save(freelancerFile));

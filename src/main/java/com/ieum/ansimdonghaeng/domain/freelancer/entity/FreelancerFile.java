@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
@@ -51,6 +52,10 @@ public class FreelancerFile {
     @Column(name = "FILE_SIZE", nullable = false)
     private Long fileSize;
 
+    @Lob
+    @Column(name = "FILE_DATA")
+    private byte[] fileData;
+
     @Column(name = "DISPLAY_ORDER", nullable = false)
     private Integer displayOrder;
 
@@ -64,6 +69,7 @@ public class FreelancerFile {
                            String fileUrl,
                            String contentType,
                            Long fileSize,
+                           byte[] fileData,
                            Integer displayOrder,
                            LocalDateTime uploadedAt) {
         this.freelancerProfile = freelancerProfile;
@@ -72,6 +78,7 @@ public class FreelancerFile {
         this.fileUrl = fileUrl;
         this.contentType = contentType;
         this.fileSize = fileSize;
+        this.fileData = fileData;
         this.displayOrder = displayOrder;
         this.uploadedAt = uploadedAt;
     }
@@ -83,6 +90,26 @@ public class FreelancerFile {
                                         String contentType,
                                         Long fileSize,
                                         Integer displayOrder) {
+        return create(
+                freelancerProfile,
+                originalFilename,
+                storedFilename,
+                fileUrl,
+                contentType,
+                fileSize,
+                null,
+                displayOrder
+        );
+    }
+
+    public static FreelancerFile create(FreelancerProfile freelancerProfile,
+                                        String originalFilename,
+                                        String storedFilename,
+                                        String fileUrl,
+                                        String contentType,
+                                        Long fileSize,
+                                        byte[] fileData,
+                                        Integer displayOrder) {
         return FreelancerFile.builder()
                 .freelancerProfile(freelancerProfile)
                 .originalFilename(originalFilename)
@@ -90,6 +117,7 @@ public class FreelancerFile {
                 .fileUrl(fileUrl)
                 .contentType(contentType)
                 .fileSize(fileSize)
+                .fileData(fileData)
                 .displayOrder(displayOrder)
                 .uploadedAt(LocalDateTime.now())
                 .build();

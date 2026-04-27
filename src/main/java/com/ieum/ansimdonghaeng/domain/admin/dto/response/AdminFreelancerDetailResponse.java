@@ -40,7 +40,7 @@ public record AdminFreelancerDetailResponse(
     }
 
     public record PortfolioFileResponse(
-            Long verificationFileId,
+            Long fileId,
             String originalName,
             String contentType,
             Long fileSize,

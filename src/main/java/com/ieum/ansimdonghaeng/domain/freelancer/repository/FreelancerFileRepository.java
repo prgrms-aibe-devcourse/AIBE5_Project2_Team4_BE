@@ -19,6 +19,8 @@ public interface FreelancerFileRepository extends JpaRepository<FreelancerFile, 
             """)
     List<FreelancerFile> findAllByUserId(@Param("userId") Long userId);
 
+    List<FreelancerFile> findAllByFreelancerProfile_IdOrderByDisplayOrderAscUploadedAtDesc(Long freelancerProfileId);
+
     long countByFreelancerProfile_Id(Long freelancerProfileId);
 
     @Query("""

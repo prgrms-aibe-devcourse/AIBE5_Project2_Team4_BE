@@ -3,6 +3,7 @@ package com.ieum.ansimdonghaeng.support;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
+import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerFile;
 import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerFileRepository;
 import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerProfile;
 import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
@@ -235,6 +236,18 @@ public abstract class AdminIntegrationTestSupport {
                 "application/pdf",
                 1024L,
                 LocalDateTime.of(2026, 4, 17, 9, 30)
+        ));
+    }
+
+    protected FreelancerFile saveFreelancerFile(FreelancerProfile profile) {
+        return freelancerFileRepository.saveAndFlush(FreelancerFile.create(
+                profile,
+                "portfolio.pdf",
+                "portfolio-1.pdf",
+                "freelancers/" + profile.getId() + "/portfolio/portfolio-1.pdf",
+                "application/pdf",
+                2048L,
+                1
         ));
     }
 

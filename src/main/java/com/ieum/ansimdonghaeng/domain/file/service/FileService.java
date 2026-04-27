@@ -11,6 +11,9 @@ import com.ieum.ansimdonghaeng.domain.verification.entity.VerificationFile;
 import com.ieum.ansimdonghaeng.domain.verification.repository.VerificationFileRepository;
 import java.nio.file.Path;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +61,7 @@ public class FileService {
                 file.getOriginalFilename(),
                 file.getContentType(),
                 file.getFileSize(),
+                file.getFileData(),
                 file.getFileUrl(),
                 attachment
         );
@@ -79,6 +83,7 @@ public class FileService {
                 file.getOriginalFilename(),
                 file.getContentType(),
                 file.getFileSize(),
+                file.getFileData(),
                 file.getFileUrl(),
                 attachment
         );
@@ -87,14 +92,31 @@ public class FileService {
     private DownloadableFile toDownloadableFile(String originalFilename,
                                                 String contentType,
                                                 Long fileSize,
+                                                byte[] fileData,
                                                 String storagePath,
                                                 boolean attachment) {
-        Path path = fileStorageService.resolveReadablePath(storagePath);
         String resolvedContentType = contentType == null || contentType.isBlank()
                 ? MediaType.APPLICATION_OCTET_STREAM_VALUE
                 : contentType;
 
-        return new DownloadableFile(originalFilename, resolvedContentType, fileSize, path, attachment);
+        if (fileData != null && fileData.length > 0) {
+            return new DownloadableFile(
+                    originalFilename,
+                    resolvedContentType,
+                    (long) fileData.length,
+                    new ByteArrayResource(fileData),
+                    attachment
+            );
+        }
+
+        Path path = fileStorageService.resolveReadablePath(storagePath);
+        return new DownloadableFile(
+                originalFilename,
+                resolvedContentType,
+                fileSize,
+                new FileSystemResource(path),
+                attachment
+        );
     }
 
     private Long currentUserIdOrNull(CustomUserDetails userDetails) {
@@ -111,7 +133,7 @@ public class FileService {
             String originalFilename,
             String contentType,
             Long fileSize,
-            Path path,
+            Resource resource,
             boolean attachment
     ) {
     }

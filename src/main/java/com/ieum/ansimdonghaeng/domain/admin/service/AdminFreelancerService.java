@@ -10,16 +10,16 @@ import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminFreelancerListItem
 import com.ieum.ansimdonghaeng.domain.admin.dto.response.AdminFreelancerStateResponse;
 import com.ieum.ansimdonghaeng.domain.admin.support.AdminPageQuerySupport;
 import com.ieum.ansimdonghaeng.domain.file.support.FileKeySupport;
+import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerFile;
 import com.ieum.ansimdonghaeng.domain.freelancer.entity.FreelancerProfile;
+import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerFileRepository;
 import com.ieum.ansimdonghaeng.domain.freelancer.repository.FreelancerProfileRepository;
 import com.ieum.ansimdonghaeng.domain.verification.entity.Verification;
-import com.ieum.ansimdonghaeng.domain.verification.repository.VerificationFileRepository;
 import com.ieum.ansimdonghaeng.domain.verification.repository.VerificationRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +36,8 @@ import org.springframework.util.StringUtils;
 public class AdminFreelancerService {
 
     private final FreelancerProfileRepository freelancerProfileRepository;
+    private final FreelancerFileRepository freelancerFileRepository;
     private final VerificationRepository verificationRepository;
-    private final VerificationFileRepository verificationFileRepository;
     private final EntityManager entityManager;
 
     public PageResponse<AdminFreelancerListItemResponse> getFreelancers(Boolean verified,
@@ -168,26 +168,11 @@ public class AdminFreelancerService {
                 ))
                 .toList();
 
-        List<AdminFreelancerDetailResponse.PortfolioFileResponse> portfolioFiles = recentVerifications.stream()
-                .map(Verification::getId)
-                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new))
-                .stream()
-                .flatMap(verificationId -> verificationFileRepository.findAllByVerification_IdOrderByUploadedAtAsc(verificationId)
-                        .stream())
-                .limit(5)
-                .map(file -> {
-                    String fileKey = FileKeySupport.verificationKey(file.getId());
-                    return new AdminFreelancerDetailResponse.PortfolioFileResponse(
-                            file.getId(),
-                            file.getOriginalName(),
-                            file.getContentType(),
-                            file.getFileSize(),
-                            FileKeySupport.viewUrl(fileKey),
-                            FileKeySupport.downloadUrl(fileKey),
-                            file.getUploadedAt()
-                    );
-                })
-                .toList();
+        List<AdminFreelancerDetailResponse.PortfolioFileResponse> portfolioFiles =
+                freelancerFileRepository.findAllByFreelancerProfile_IdOrderByDisplayOrderAscUploadedAtDesc(freelancerProfileId)
+                        .stream()
+                        .map(this::toPortfolioFileResponse)
+                        .toList();
 
         return new AdminFreelancerDetailResponse(
                 profile.getId(),
@@ -243,6 +228,19 @@ public class AdminFreelancerService {
 
     private List<String> sorted(java.util.Set<String> values) {
         return values.stream().sorted(Comparator.naturalOrder()).toList();
+    }
+
+    private AdminFreelancerDetailResponse.PortfolioFileResponse toPortfolioFileResponse(FreelancerFile file) {
+        String fileKey = FileKeySupport.portfolioKey(file.getId());
+        return new AdminFreelancerDetailResponse.PortfolioFileResponse(
+                file.getId(),
+                file.getOriginalFilename(),
+                file.getContentType(),
+                file.getFileSize(),
+                FileKeySupport.viewUrl(fileKey),
+                FileKeySupport.downloadUrl(fileKey),
+                file.getUploadedAt()
+        );
     }
 
     private void appendCondition(StringBuilder selectBuilder, StringBuilder countBuilder, String condition) {

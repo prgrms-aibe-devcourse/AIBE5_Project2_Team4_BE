@@ -71,21 +71,10 @@ public class FreelancerFileStorageService {
         validateFile(originalFilename, extension, file);
 
         String storedFilename = UUID.randomUUID() + extension;
-        Path targetDirectory = baseDirectory
-                .resolve("freelancers")
-                .resolve(String.valueOf(freelancerProfileId))
-                .resolve(categoryPath)
-                .normalize();
-        Path targetPath = targetDirectory.resolve(storedFilename).normalize();
-
-        if (!targetPath.startsWith(baseDirectory)) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE, "invalid file path.");
-        }
+        String storagePath = storagePath(freelancerProfileId, categoryPath, storedFilename);
 
         try {
-            Files.createDirectories(targetDirectory);
-            file.transferTo(targetPath);
-            return new StoredFile(originalFilename, storedFilename, toPortableStoragePath(targetPath));
+            return new StoredFile(originalFilename, storedFilename, storagePath, file.getBytes());
         } catch (IOException exception) {
             throw new CustomException(ErrorCode.FILE_STORAGE_FAILED);
         }
@@ -102,6 +91,9 @@ public class FreelancerFileStorageService {
         }
 
         try {
+            if (!Files.exists(targetPath)) {
+                return;
+            }
             Files.deleteIfExists(targetPath);
         } catch (IOException ignored) {
             // Metadata deletion must not fail because a local file was already removed.
@@ -121,8 +113,13 @@ public class FreelancerFileStorageService {
         return targetPath;
     }
 
-    private String toPortableStoragePath(Path targetPath) {
-        return baseDirectory.relativize(targetPath).toString().replace('\\', '/');
+    private String storagePath(Long freelancerProfileId, String categoryPath, String storedFilename) {
+        return "freelancers/"
+                + freelancerProfileId
+                + "/"
+                + categoryPath
+                + "/"
+                + storedFilename;
     }
 
     private Path resolvePathOrNull(String storagePath, boolean requireRegularFile) {
@@ -243,6 +240,6 @@ public class FreelancerFileStorageService {
         }
     }
 
-    public record StoredFile(String originalFilename, String storedFilename, String fileUrl) {
+    public record StoredFile(String originalFilename, String storedFilename, String fileUrl, byte[] fileData) {
     }
 }

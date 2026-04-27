@@ -4,7 +4,6 @@ import com.ieum.ansimdonghaeng.common.security.CustomUserDetails;
 import com.ieum.ansimdonghaeng.domain.file.service.FileService;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -52,6 +51,6 @@ public class FileController {
                 .contentType(mediaType)
                 .contentLength(downloadableFile.fileSize() == null ? -1 : downloadableFile.fileSize())
                 .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
-                .body(new FileSystemResource(downloadableFile.path()));
+                .body(downloadableFile.resource());
     }
 }

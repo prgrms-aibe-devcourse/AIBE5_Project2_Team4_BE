@@ -87,6 +87,9 @@ class FileControllerIntegrationTest extends AdminIntegrationTestSupport {
                 .path("data")
                 .path("viewUrl")
                 .asText();
+        var savedPortfolioFile = freelancerFileRepository.findAllByUserId(freelancerUser.getId()).get(0);
+        assertThat(savedPortfolioFile.getFileData())
+                .containsExactly("portfolio-file".getBytes(StandardCharsets.UTF_8));
 
         MockMultipartFile verificationFile = new MockMultipartFile(
                 "file",
@@ -107,6 +110,12 @@ class FileControllerIntegrationTest extends AdminIntegrationTestSupport {
                 .path("data")
                 .path("downloadUrl")
                 .asText();
+        var savedVerificationFile = verificationFileRepository.findAllByVerificationIdAndUserId(
+                verification.getId(),
+                freelancerUser.getId()
+        ).get(0);
+        assertThat(savedVerificationFile.getFileData())
+                .containsExactly("%PDF-proof".getBytes(StandardCharsets.UTF_8));
 
         mockMvc.perform(get(portfolioViewUrl))
                 .andExpect(status().isOk())
@@ -155,6 +164,8 @@ class FileControllerIntegrationTest extends AdminIntegrationTestSupport {
         ).get(0);
         assertThat(savedFile.getFileUrl()).startsWith("freelancers/");
         assertThat(Path.of(savedFile.getFileUrl()).isAbsolute()).isFalse();
+        assertThat(savedFile.getFileData())
+                .containsExactly("%PDF-admin-proof".getBytes(StandardCharsets.UTF_8));
 
         mockMvc.perform(get(verificationViewUrl).with(adminPrincipal(admin)))
                 .andExpect(status().isOk())
@@ -164,6 +175,46 @@ class FileControllerIntegrationTest extends AdminIntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")))
                 .andExpect(content().bytes("%PDF-admin-proof".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    void adminCanViewAndDownloadPrivatePortfolioFileOwnedByAnotherUser() throws Exception {
+        User admin = saveUser("admin-portfolio@test.com", "admin", UserRole.ADMIN);
+        User freelancerUser = saveUser("freelancer-private-file@test.com", "freelancer", UserRole.FREELANCER);
+        saveFreelancerProfile(freelancerUser, false, false);
+
+        MockMultipartFile portfolioFile = new MockMultipartFile(
+                "file",
+                "portfolio.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                "private-portfolio".getBytes(StandardCharsets.UTF_8)
+        );
+        MvcResult portfolioResult = mockMvc.perform(multipart("/api/v1/freelancers/me/files")
+                        .file(portfolioFile)
+                        .with(freelancerPrincipal(freelancerUser)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String portfolioViewUrl = objectMapper.readTree(portfolioResult.getResponse().getContentAsString())
+                .path("data")
+                .path("viewUrl")
+                .asText();
+        String portfolioDownloadUrl = objectMapper.readTree(portfolioResult.getResponse().getContentAsString())
+                .path("data")
+                .path("downloadUrl")
+                .asText();
+
+        mockMvc.perform(get(portfolioViewUrl))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("FILE_404_1"));
+
+        mockMvc.perform(get(portfolioViewUrl).with(adminPrincipal(admin)))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes("private-portfolio".getBytes(StandardCharsets.UTF_8)));
+
+        mockMvc.perform(get(portfolioDownloadUrl).with(adminPrincipal(admin)))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")))
+                .andExpect(content().bytes("private-portfolio".getBytes(StandardCharsets.UTF_8)));
     }
 
     @Test

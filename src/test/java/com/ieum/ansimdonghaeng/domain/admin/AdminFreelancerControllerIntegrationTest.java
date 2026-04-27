@@ -50,13 +50,17 @@ class AdminFreelancerControllerIntegrationTest extends AdminIntegrationTestSuppo
         User admin = saveUser("admin@test.com", "admin", UserRole.ADMIN);
         User freelancerUser = saveUser("freelancer@test.com", "freelancer", UserRole.FREELANCER);
         var profile = saveFreelancerProfile(freelancerUser, false, true);
+        var file = saveFreelancerFile(profile);
         saveVerification(profile, VerificationType.CAREGIVER, VerificationStatus.PENDING, null, null);
 
         mockMvc.perform(get("/api/v1/admin/freelancers/{freelancerProfileId}", profile.getId()).with(adminPrincipal(admin)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.freelancerProfileId").value(profile.getId()))
                 .andExpect(jsonPath("$.data.userId").value(freelancerUser.getId()))
-                .andExpect(jsonPath("$.data.recentVerifications[0].verificationId").exists());
+                .andExpect(jsonPath("$.data.recentVerifications[0].verificationId").exists())
+                .andExpect(jsonPath("$.data.portfolioFiles[0].fileId").value(file.getId()))
+                .andExpect(jsonPath("$.data.portfolioFiles[0].viewUrl").value("/api/v1/files/portfolio-" + file.getId()))
+                .andExpect(jsonPath("$.data.portfolioFiles[0].downloadUrl").value("/api/v1/files/portfolio-" + file.getId() + "/download"));
     }
 
     @Test

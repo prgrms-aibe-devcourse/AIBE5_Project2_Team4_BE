@@ -84,6 +84,7 @@ public class VerificationService {
                 storedFile.fileUrl(),
                 file.getContentType(),
                 file.getSize(),
+                storedFile.fileData(),
                 java.time.LocalDateTime.now()
         );
         return VerificationFileResponse.from(verificationFileRepository.save(verificationFile));

@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
@@ -51,6 +52,10 @@ public class VerificationFile {
     @Column(name = "FILE_SIZE", nullable = false)
     private Long fileSize;
 
+    @Lob
+    @Column(name = "FILE_DATA")
+    private byte[] fileData;
+
     @Column(name = "UPLOADED_AT", nullable = false)
     private LocalDateTime uploadedAt;
 
@@ -62,6 +67,7 @@ public class VerificationFile {
                              String fileUrl,
                              String contentType,
                              Long fileSize,
+                             byte[] fileData,
                              LocalDateTime uploadedAt) {
         this.verificationId = verificationId;
         this.verification = verification;
@@ -70,6 +76,7 @@ public class VerificationFile {
         this.fileUrl = fileUrl;
         this.contentType = contentType;
         this.fileSize = fileSize;
+        this.fileData = fileData;
         this.uploadedAt = uploadedAt;
     }
 
@@ -80,6 +87,26 @@ public class VerificationFile {
                                           String contentType,
                                           Long fileSize,
                                           LocalDateTime uploadedAt) {
+        return create(
+                verification,
+                originalFilename,
+                storedFilename,
+                fileUrl,
+                contentType,
+                fileSize,
+                null,
+                uploadedAt
+        );
+    }
+
+    public static VerificationFile create(Verification verification,
+                                          String originalFilename,
+                                          String storedFilename,
+                                          String fileUrl,
+                                          String contentType,
+                                          Long fileSize,
+                                          byte[] fileData,
+                                          LocalDateTime uploadedAt) {
         return VerificationFile.builder()
                 .verificationId(verification.getId())
                 .verification(verification)
@@ -88,6 +115,7 @@ public class VerificationFile {
                 .fileUrl(fileUrl)
                 .contentType(contentType)
                 .fileSize(fileSize)
+                .fileData(fileData)
                 .uploadedAt(uploadedAt)
                 .build();
     }
