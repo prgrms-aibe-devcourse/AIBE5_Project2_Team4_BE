@@ -7,8 +7,12 @@ import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -18,6 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class FreelancerFileStorageService {
 
+    private static final String STORAGE_FILE_ROOT = "freelancers";
+    private static final Set<String> LEGACY_STORAGE_BASE_NAMES = Set.of("local", "default");
     private static final long MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
             ".pdf",
@@ -79,7 +85,7 @@ public class FreelancerFileStorageService {
         try {
             Files.createDirectories(targetDirectory);
             file.transferTo(targetPath);
-            return new StoredFile(originalFilename, storedFilename, targetPath.toString());
+            return new StoredFile(originalFilename, storedFilename, toPortableStoragePath(targetPath));
         } catch (IOException exception) {
             throw new CustomException(ErrorCode.FILE_STORAGE_FAILED);
         }
@@ -90,14 +96,8 @@ public class FreelancerFileStorageService {
             return;
         }
 
-        Path targetPath;
-        try {
-            targetPath = Path.of(storagePath).toAbsolutePath().normalize();
-        } catch (InvalidPathException exception) {
-            return;
-        }
-
-        if (!targetPath.startsWith(baseDirectory)) {
+        Path targetPath = resolvePathOrNull(storagePath, false);
+        if (targetPath == null) {
             return;
         }
 
@@ -113,12 +113,99 @@ public class FreelancerFileStorageService {
             throw new CustomException(ErrorCode.FILE_NOT_FOUND);
         }
 
-        Path targetPath = Path.of(storagePath).toAbsolutePath().normalize();
-        if (!targetPath.startsWith(baseDirectory) || !Files.isRegularFile(targetPath)) {
+        Path targetPath = resolvePathOrNull(storagePath, true);
+        if (targetPath == null) {
             throw new CustomException(ErrorCode.FILE_NOT_FOUND);
         }
 
         return targetPath;
+    }
+
+    private String toPortableStoragePath(Path targetPath) {
+        return baseDirectory.relativize(targetPath).toString().replace('\\', '/');
+    }
+
+    private Path resolvePathOrNull(String storagePath, boolean requireRegularFile) {
+        List<Path> candidates = pathCandidates(storagePath);
+        Set<Path> allowedBaseDirectories = allowedBaseDirectories();
+
+        for (Path candidate : candidates) {
+            Path normalizedCandidate = candidate.toAbsolutePath().normalize();
+            if (allowedBaseDirectories.stream().noneMatch(normalizedCandidate::startsWith)) {
+                continue;
+            }
+            if (!requireRegularFile || Files.isRegularFile(normalizedCandidate)) {
+                return normalizedCandidate;
+            }
+        }
+
+        return null;
+    }
+
+    private List<Path> pathCandidates(String storagePath) {
+        List<Path> candidates = new ArrayList<>();
+        try {
+            Path rawPath = Path.of(storagePath);
+            if (rawPath.isAbsolute()) {
+                candidates.add(rawPath);
+            } else {
+                candidates.add(baseDirectory.resolve(rawPath));
+            }
+        } catch (InvalidPathException ignored) {
+            // Legacy values may contain another OS' absolute path syntax. Try extracting the storage suffix below.
+        }
+
+        extractStorageRelativePath(storagePath).ifPresent(relativePath -> {
+            candidates.add(baseDirectory.resolve(relativePath));
+            Path storageRoot = baseDirectory.getParent();
+            if (storageRoot != null) {
+                for (String legacyBaseName : LEGACY_STORAGE_BASE_NAMES) {
+                    candidates.add(storageRoot.resolve(legacyBaseName).resolve(relativePath));
+                }
+            }
+        });
+
+        return candidates;
+    }
+
+    private Optional<Path> extractStorageRelativePath(String storagePath) {
+        String normalized = storagePath.replace('\\', '/');
+        String marker = "/" + STORAGE_FILE_ROOT + "/";
+        int markerIndex = normalized.lastIndexOf(marker);
+        String relativeValue;
+        if (markerIndex >= 0) {
+            relativeValue = normalized.substring(markerIndex + 1);
+        } else if (normalized.startsWith(STORAGE_FILE_ROOT + "/")) {
+            relativeValue = normalized;
+        } else {
+            return Optional.empty();
+        }
+
+        try {
+            Path relativePath = Path.of(relativeValue).normalize();
+            if (relativePath.isAbsolute()
+                    || relativePath.startsWith("..")
+                    || !relativePath.startsWith(STORAGE_FILE_ROOT)) {
+                return Optional.empty();
+            }
+            return Optional.of(relativePath);
+        } catch (InvalidPathException exception) {
+            return Optional.empty();
+        }
+    }
+
+    private Set<Path> allowedBaseDirectories() {
+        Set<Path> allowedDirectories = new HashSet<>();
+        allowedDirectories.add(baseDirectory);
+
+        Path storageRoot = baseDirectory.getParent();
+        if (storageRoot != null) {
+            for (String legacyBaseName : LEGACY_STORAGE_BASE_NAMES) {
+                allowedDirectories.add(storageRoot.resolve(legacyBaseName).toAbsolutePath().normalize());
+            }
+        }
+
+        return allowedDirectories;
     }
 
     private String extractExtension(String originalFilename) {
