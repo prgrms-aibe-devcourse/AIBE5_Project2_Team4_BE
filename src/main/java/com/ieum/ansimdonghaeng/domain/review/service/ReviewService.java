@@ -105,6 +105,15 @@ public class ReviewService {
 
     public PageResponse<ReviewSummaryResponse> getMyReviews(Long currentUserId, Pageable pageable) {
         Page<Review> reviewPage = reviewRepository.findAllByReviewerUserIdOrderByCreatedAtDescIdDesc(currentUserId, pageable);
+        return toReviewSummaryPage(reviewPage, true);
+    }
+
+    public PageResponse<ReviewSummaryResponse> getMyReceivedReviews(Long currentUserId, Pageable pageable) {
+        Page<Review> reviewPage = reviewRepository.findReceivedReviewsByRevieweeUserId(currentUserId, pageable);
+        return toReviewSummaryPage(reviewPage, true);
+    }
+
+    private PageResponse<ReviewSummaryResponse> toReviewSummaryPage(Page<Review> reviewPage, boolean includeReported) {
         if (reviewPage.isEmpty()) {
             return PageResponse.from(reviewPage.map(ReviewSummaryResponse::from));
         }
@@ -119,9 +128,9 @@ public class ReviewService {
                         proposal -> proposal.getProject().getId(),
                         Function.identity()
                 ));
-        Set<Long> reportedReviewIds = reportRepository.findReportedReviewIds(
-                reviewPage.getContent().stream().map(Review::getId).toList()
-        );
+        Set<Long> reportedReviewIds = includeReported
+                ? reportRepository.findReportedReviewIds(reviewPage.getContent().stream().map(Review::getId).toList())
+                : Set.of();
 
         return PageResponse.from(reviewPage.map(review -> ReviewSummaryResponse.from(
                 review,
@@ -164,26 +173,7 @@ public class ReviewService {
     public PageResponse<ReviewSummaryResponse> getPublicFreelancerReviews(Long freelancerProfileId, Pageable pageable) {
         freelancerService.getPublicFreelancerProfile(freelancerProfileId);
         Page<Review> reviewPage = reviewRepository.findPublicReviewsByFreelancerProfileId(freelancerProfileId, pageable);
-        if (reviewPage.isEmpty()) {
-            return PageResponse.from(reviewPage.map(ReviewSummaryResponse::from));
-        }
-
-        List<Long> projectIds = reviewPage.getContent().stream()
-                .map(review -> review.getProject().getId())
-                .distinct()
-                .toList();
-        Map<Long, Proposal> acceptedProposalByProjectId = proposalRepository.findAcceptedProposalsByProjectIds(projectIds)
-                .stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        proposal -> proposal.getProject().getId(),
-                        Function.identity()
-                ));
-
-        return PageResponse.from(reviewPage.map(review -> ReviewSummaryResponse.from(
-                review,
-                acceptedProposalByProjectId.get(review.getProject().getId()),
-                false
-        )));
+        return toReviewSummaryPage(reviewPage, false);
     }
 
     public List<ReviewTagCodeResponse> getActiveTagCodes() {

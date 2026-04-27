@@ -96,6 +96,21 @@ public class ReviewController {
         ));
     }
 
+    @GetMapping("/users/me/received-reviews")
+    @PreAuthorize("hasAnyRole('USER','FREELANCER')")
+    public ResponseEntity<ApiResponse<PageResponse<ReviewSummaryResponse>>> getMyReceivedReviews(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PositiveOrZero @RequestParam(defaultValue = "0") int page,
+            @Positive @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                reviewService.getMyReceivedReviews(
+                        AuthenticatedUserSupport.currentUserId(userDetails),
+                        PageRequest.of(page, size)
+                )
+        ));
+    }
+
     @PatchMapping("/users/me/reviews/{reviewId}")
     @PreAuthorize("hasAnyRole('USER','FREELANCER')")
     public ResponseEntity<ApiResponse<ReviewDetailResponse>> updateMyReview(

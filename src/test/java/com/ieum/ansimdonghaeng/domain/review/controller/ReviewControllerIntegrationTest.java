@@ -141,6 +141,65 @@ class ReviewControllerIntegrationTest extends AdminIntegrationTestSupport {
     }
 
     @Test
+    void myReceivedReviewsReturnsReviewsWhereCurrentUserIsReviewee() throws Exception {
+        User owner = saveUser("owner-received@test.com", "owner", UserRole.USER);
+        User freelancerUser = saveUser("freelancer-received@test.com", "freelancer", UserRole.FREELANCER);
+        var freelancerProfile = saveFreelancerProfile(freelancerUser, true, true);
+        var project = saveProject(owner, ProjectStatus.COMPLETED);
+        saveAcceptedProposal(project, freelancerProfile);
+
+        MvcResult userToFreelancerResult = mockMvc.perform(post("/api/v1/projects/{projectId}/reviews", project.getId())
+                        .with(userPrincipal(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "rating", 5,
+                                "tagCodes", List.of("KIND"),
+                                "content", "guardian to mate"
+                        ))))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        long userToFreelancerReviewId = objectMapper.readTree(userToFreelancerResult.getResponse().getContentAsString())
+                .path("data")
+                .path("reviewId")
+                .asLong();
+
+        MvcResult freelancerToUserResult = mockMvc.perform(post("/api/v1/projects/{projectId}/requester-reviews", project.getId())
+                        .with(freelancerPrincipal(freelancerUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "rating", 4,
+                                "tagCodes", List.of("PUNCTUAL"),
+                                "content", "mate to guardian"
+                        ))))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        long freelancerToUserReviewId = objectMapper.readTree(freelancerToUserResult.getResponse().getContentAsString())
+                .path("data")
+                .path("reviewId")
+                .asLong();
+
+        mockMvc.perform(get("/api/v1/users/me/received-reviews").with(userPrincipal(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].reviewId").value(freelancerToUserReviewId))
+                .andExpect(jsonPath("$.data.content[0].reviewDirection").value("FREELANCER_TO_USER"))
+                .andExpect(jsonPath("$.data.content[0].reviewerUserId").value(freelancerUser.getId()))
+                .andExpect(jsonPath("$.data.content[0].revieweeUserId").value(owner.getId()))
+                .andExpect(jsonPath("$.data.content[0].content").value("mate to guardian"));
+
+        mockMvc.perform(get("/api/v1/users/me/received-reviews").with(freelancerPrincipal(freelancerUser)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].reviewId").value(userToFreelancerReviewId))
+                .andExpect(jsonPath("$.data.content[0].reviewDirection").value("USER_TO_FREELANCER"))
+                .andExpect(jsonPath("$.data.content[0].reviewerUserId").value(owner.getId()))
+                .andExpect(jsonPath("$.data.content[0].revieweeUserId").value(freelancerUser.getId()))
+                .andExpect(jsonPath("$.data.content[0].content").value("guardian to mate"));
+    }
+
+    @Test
     void requesterReviewFailsForUnassignedFreelancer() throws Exception {
         User owner = saveUser("owner-denied@test.com", "owner", UserRole.USER);
         User assignedFreelancerUser = saveUser("assigned-freelancer@test.com", "assigned", UserRole.FREELANCER);

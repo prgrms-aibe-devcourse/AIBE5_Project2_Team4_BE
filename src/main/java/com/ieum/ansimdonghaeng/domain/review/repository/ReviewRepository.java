@@ -26,6 +26,42 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
     Page<Review> findAllByReviewerUserIdOrderByCreatedAtDescIdDesc(Long reviewerUserId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"project", "project.ownerUser", "reviewerUser", "tags"})
+    @Query(
+            value = """
+                    select review
+                    from Review review
+                    join review.project project
+                    join com.ieum.ansimdonghaeng.domain.proposal.entity.Proposal proposal
+                      on proposal.project = project
+                    join proposal.freelancerProfile freelancerProfile
+                    join freelancerProfile.user freelancerUser
+                    where proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
+                      and (
+                        (project.ownerUserId = :revieweeUserId and review.reviewerUserId = freelancerUser.id)
+                        or
+                        (freelancerUser.id = :revieweeUserId and review.reviewerUserId = project.ownerUserId)
+                      )
+                    order by review.createdAt desc, review.id desc
+                    """,
+            countQuery = """
+                    select count(review)
+                    from Review review
+                    join review.project project
+                    join com.ieum.ansimdonghaeng.domain.proposal.entity.Proposal proposal
+                      on proposal.project = project
+                    join proposal.freelancerProfile freelancerProfile
+                    join freelancerProfile.user freelancerUser
+                    where proposal.status = com.ieum.ansimdonghaeng.domain.proposal.entity.ProposalStatus.ACCEPTED
+                      and (
+                        (project.ownerUserId = :revieweeUserId and review.reviewerUserId = freelancerUser.id)
+                        or
+                        (freelancerUser.id = :revieweeUserId and review.reviewerUserId = project.ownerUserId)
+                      )
+                    """
+    )
+    Page<Review> findReceivedReviewsByRevieweeUserId(@Param("revieweeUserId") Long revieweeUserId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"project", "project.ownerUser", "reviewerUser", "tags"})
     @Query("""
             select review
             from Review review
