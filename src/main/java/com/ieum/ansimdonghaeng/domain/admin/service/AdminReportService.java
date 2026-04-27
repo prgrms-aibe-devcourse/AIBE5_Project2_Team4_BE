@@ -142,6 +142,7 @@ public class AdminReportService {
         User adminUser = userRepository.findById(adminUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND, "Admin user was not found."));
         report.resolve(adminUser, java.time.LocalDateTime.now());
+        report.getReview().blind();
         return toDetailResponse(report);
     }
 

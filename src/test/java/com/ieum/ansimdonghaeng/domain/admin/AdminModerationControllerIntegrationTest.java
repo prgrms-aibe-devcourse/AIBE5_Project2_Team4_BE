@@ -82,6 +82,7 @@ class AdminModerationControllerIntegrationTest extends AdminIntegrationTestSuppo
         mockMvc.perform(patch("/api/v1/admin/reports/{reportId}/resolve", report.getId()).with(adminPrincipal(admin)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("RESOLVED"))
+                .andExpect(jsonPath("$.data.review.blindedYn").value(true))
                 .andExpect(jsonPath("$.data.handledBy.userId").value(admin.getId()));
     }
 
